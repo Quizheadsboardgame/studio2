@@ -1,13 +1,13 @@
-
 "use client";
 
-import { Task, PRIORITY_ORDER } from "@/types/task";
+import { Task } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { format, parseISO } from 'date-fns';
 
 interface TaskCardProps {
   task: Task;
@@ -31,6 +31,15 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData("taskId", task.id);
   };
+
+  // Format date to UK format (DD/MM/YYYY)
+  const formattedDate = React.useMemo(() => {
+    try {
+      return format(parseISO(task.dueDate), 'dd/MM/yyyy');
+    } catch (e) {
+      return task.dueDate;
+    }
+  }, [task.dueDate]);
 
   return (
     <Card 
@@ -87,7 +96,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
             </Badge>
             <div className="flex items-center text-[10px] text-muted-foreground">
               <Calendar className="w-3 h-3 mr-1" />
-              {task.dueDate}
+              {formattedDate}
             </div>
           </div>
           

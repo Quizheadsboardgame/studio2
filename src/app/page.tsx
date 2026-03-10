@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -22,6 +21,7 @@ import {
   Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
   const {
@@ -89,28 +89,21 @@ export default function Home() {
           </div>
         </header>
 
-        {/* User Switcher */}
+        {/* Primary User Tabs */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-2 mb-3 text-slate-500 dark:text-slate-400">
-            <Users className="h-4 w-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">Active User</span>
-          </div>
-          <div className="bg-white dark:bg-slate-800 p-1.5 rounded-2xl shadow-md border dark:border-slate-700 flex items-center gap-1">
-            {USER_OPTIONS.map((user) => (
-              <button
-                key={user}
-                onClick={() => setActiveUser(user)}
-                className={cn(
-                  "px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
-                  activeUser === user 
-                    ? "bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900 shadow-lg scale-105" 
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
-                )}
-              >
-                {user}
-              </button>
-            ))}
-          </div>
+          <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-md">
+            <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
+              {USER_OPTIONS.map((user) => (
+                <TabsTrigger 
+                  key={user} 
+                  value={user}
+                  className="rounded-xl font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-slate-50 dark:data-[state=active]:text-slate-900"
+                >
+                  {user}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Navigation & Controls */}
