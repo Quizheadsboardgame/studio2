@@ -26,7 +26,7 @@ export function useTasks() {
   const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
 
-  // Automatically sign in anonymously if not logged in
+  // Automatically sign in anonymously if not logged in (to enable basic firestore usage)
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
@@ -63,15 +63,17 @@ export function useTasks() {
   const addTask = () => {
     if (!db || !user || !tasksQuery) return;
     
+    const now = new Date().toISOString();
     const newTaskData = {
       name: 'New Task',
       status: 'Incomplete' as TaskStatus,
       priority: 'Medium' as any,
-      dueDate: new Date().toISOString().split('T')[0],
+      dueDate: now.split('T')[0],
       notes: '',
       tab: activeTab,
       owner: activeUser,
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
       userId: user.uid // Denormalized for security rules as per backend.json
     };
     
@@ -81,7 +83,10 @@ export function useTasks() {
   const updateTask = (updatedTask: Task) => {
     if (!db || !user) return;
     const taskRef = doc(db, 'users', user.uid, 'tasks', updatedTask.id);
-    updateDocumentNonBlocking(taskRef, { ...updatedTask, updatedAt: Date.now() });
+    updateDocumentNonBlocking(taskRef, { 
+      ...updatedTask, 
+      updatedAt: new Date().toISOString() 
+    });
   };
 
   const deleteTask = (id: string) => {
@@ -93,7 +98,10 @@ export function useTasks() {
   const moveTaskStatus = (id: string, newStatus: TaskStatus) => {
     if (!db || !user) return;
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
-    updateDocumentNonBlocking(taskRef, { status: newStatus, updatedAt: Date.now() });
+    updateDocumentNonBlocking(taskRef, { 
+      status: newStatus, 
+      updatedAt: new Date().toISOString() 
+    });
   };
 
   return {

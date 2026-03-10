@@ -3,7 +3,9 @@
 
 import * as React from "react";
 import { useTasks } from "@/hooks/use-tasks";
+import { useUser, useAuth } from "@/firebase";
 import { TaskDialog } from "@/components/task-dialog";
+import { AuthDialog } from "@/components/auth-dialog";
 import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS } from "@/types/task";
@@ -19,12 +21,18 @@ import {
   Sun, 
   Filter,
   CheckCircle2,
-  Loader2
+  Loader2,
+  RefreshCw,
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { signOut } from "firebase/auth";
 
 export default function Home() {
+  const { user } = useUser();
+  const auth = useAuth();
   const {
     filteredTasks,
     isLoaded,
@@ -46,6 +54,7 @@ export default function Home() {
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isAuthOpen, setIsAuthOpen] = React.useState(false);
 
   // Sync dark mode class
   React.useEffect(() => {
@@ -79,6 +88,26 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            {user?.isAnonymous === false ? (
+              <div className="flex items-center gap-2 mr-2">
+                <div className="flex flex-col items-end hidden sm:flex">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{user.email}</span>
+                  <span className="text-[10px] text-green-500 flex items-center gap-1"><RefreshCw className="h-3 w-3" /> Synced</span>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => signOut(auth)} title="Log Out">
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAuthOpen(true)}
+                className="rounded-full border-blue-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-slate-800"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" /> Sync Across Devices
+              </Button>
+            )}
+
             <Button 
               variant="outline" 
               size="icon" 
@@ -216,6 +245,11 @@ export default function Home() {
         isOpen={!!editingTask} 
         onClose={() => setEditingTask(null)} 
         onSave={updateTask}
+      />
+
+      <AuthDialog 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
       />
     </div>
   );
