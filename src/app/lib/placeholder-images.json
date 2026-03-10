@@ -1,0 +1,11 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "empty-tasks",
+      "description": "Illustration of a relaxed person with a clear schedule",
+      "imageUrl": "https://picsum.photos/seed/tasks-empty/600/400",
+      "imageHint": "relaxing person"
+    }
+  ]
+}
