@@ -1,89 +1,105 @@
 
+'use client';
+
 import { useState, useEffect, useMemo } from 'react';
 import { Task, TaskStatus, TaskTab, TaskUser, PRIORITY_ORDER } from '@/types/task';
-
-const LOCAL_STORAGE_KEY = 'time-based-tasks-v2';
+import { 
+  useUser, 
+  useFirestore, 
+  useCollection, 
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+  initiateAnonymousSignIn
+} from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [activeTab, setActiveTab] = useState<TaskTab>('Today');
   const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
 
-  // Load from local storage
+  // Automatically sign in anonymously if not logged in
   useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      try {
-        setTasks(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse tasks', e);
-      }
+    if (!isUserLoading && !user && db) {
+      const { auth } = require('firebase/auth');
+      const authInstance = auth(db.app);
+      initiateAnonymousSignIn(authInstance);
     }
-    setIsLoaded(true);
-  }, []);
+  }, [user, isUserLoading, db]);
 
-  // Save to local storage
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
-    }
-  }, [tasks, isLoaded]);
+  // Sync tasks from Firestore
+  const tasksQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return collection(db, 'users', user.uid, 'tasks');
+  }, [db, user]);
+
+  const { data: firestoreTasks, isLoading: isTasksLoading } = useCollection<Task>(tasksQuery);
+
+  const tasks = firestoreTasks || [];
 
   const filteredAndSortedTasks = useMemo(() => {
     return tasks
       .filter((task) => {
         const matchesSearch = task.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                             task.notes.toLowerCase().includes(searchQuery.toLowerCase());
+                             (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         const matchesTab = task.tab === activeTab;
         const matchesUser = task.owner === activeUser;
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
-        // Sort by priority (High -> Low)
         const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
         if (priorityDiff !== 0) return priorityDiff;
-        
-        // Then by due date
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
   }, [tasks, searchQuery, statusFilter, activeTab, activeUser]);
 
   const addTask = () => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
+    if (!db || !user || !tasksQuery) return;
+    
+    const newTaskData = {
       name: 'New Task',
-      status: 'Incomplete',
-      priority: 'Medium',
+      status: 'Incomplete' as TaskStatus,
+      priority: 'Medium' as any,
       dueDate: new Date().toISOString().split('T')[0],
       notes: '',
       tab: activeTab,
       owner: activeUser,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      userId: user.uid // Denormalized for security rules as per backend.json
     };
-    setTasks([...tasks, newTask]);
+    
+    addDocumentNonBlocking(tasksQuery, newTaskData);
   };
 
   const updateTask = (updatedTask: Task) => {
-    setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+    if (!db || !user) return;
+    const taskRef = doc(db, 'users', user.uid, 'tasks', updatedTask.id);
+    updateDocumentNonBlocking(taskRef, { ...updatedTask, updatedAt: Date.now() });
   };
 
   const deleteTask = (id: string) => {
-    setTasks(tasks.filter((t) => t.id !== id));
+    if (!db || !user) return;
+    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
+    deleteDocumentNonBlocking(taskRef);
   };
 
   const moveTaskStatus = (id: string, newStatus: TaskStatus) => {
-    setTasks(tasks.map((t) => t.id === id ? { ...t, status: newStatus } : t));
+    if (!db || !user) return;
+    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
+    updateDocumentNonBlocking(taskRef, { status: newStatus, updatedAt: Date.now() });
   };
 
   return {
     tasks,
     filteredTasks: filteredAndSortedTasks,
-    isLoaded,
+    isLoaded: !isUserLoading && !isTasksLoading,
     searchQuery,
     setSearchQuery,
     statusFilter,
