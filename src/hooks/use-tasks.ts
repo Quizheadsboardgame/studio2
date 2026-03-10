@@ -6,6 +6,7 @@ import { Task, TaskStatus, TaskTab, TaskUser, PRIORITY_ORDER } from '@/types/tas
 import { 
   useUser, 
   useFirestore, 
+  useAuth,
   useCollection, 
   useMemoFirebase,
   addDocumentNonBlocking,
@@ -18,6 +19,7 @@ import { collection, doc } from 'firebase/firestore';
 export function useTasks() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
+  const auth = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [activeTab, setActiveTab] = useState<TaskTab>('Today');
@@ -26,12 +28,10 @@ export function useTasks() {
 
   // Automatically sign in anonymously if not logged in
   useEffect(() => {
-    if (!isUserLoading && !user && db) {
-      const { auth } = require('firebase/auth');
-      const authInstance = auth(db.app);
-      initiateAnonymousSignIn(authInstance);
+    if (!isUserLoading && !user && auth) {
+      initiateAnonymousSignIn(auth);
     }
-  }, [user, isUserLoading, db]);
+  }, [user, isUserLoading, auth]);
 
   // Sync tasks from Firestore
   const tasksQuery = useMemoFirebase(() => {
