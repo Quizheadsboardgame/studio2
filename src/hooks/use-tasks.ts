@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
-import { Task, TaskStatus, TaskTab, PRIORITY_ORDER } from '@/types/task';
+import { Task, TaskStatus, TaskTab, TaskUser, PRIORITY_ORDER } from '@/types/task';
 
-const LOCAL_STORAGE_KEY = 'time-based-tasks-v1';
+const LOCAL_STORAGE_KEY = 'time-based-tasks-v2';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -10,6 +10,7 @@ export function useTasks() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [activeTab, setActiveTab] = useState<TaskTab>('Today');
+  const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
 
   // Load from local storage
@@ -39,7 +40,8 @@ export function useTasks() {
                              task.notes.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         const matchesTab = task.tab === activeTab;
-        return matchesSearch && matchesStatus && matchesTab;
+        const matchesUser = task.owner === activeUser;
+        return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
         // Sort by priority (High -> Low)
@@ -49,7 +51,7 @@ export function useTasks() {
         // Then by due date
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
-  }, [tasks, searchQuery, statusFilter, activeTab]);
+  }, [tasks, searchQuery, statusFilter, activeTab, activeUser]);
 
   const addTask = () => {
     const newTask: Task = {
@@ -60,6 +62,7 @@ export function useTasks() {
       dueDate: new Date().toISOString().split('T')[0],
       notes: '',
       tab: activeTab,
+      owner: activeUser,
       createdAt: Date.now()
     };
     setTasks([...tasks, newTask]);
@@ -87,6 +90,8 @@ export function useTasks() {
     setStatusFilter,
     activeTab,
     setActiveTab,
+    activeUser,
+    setActiveUser,
     viewMode,
     setViewMode,
     addTask,

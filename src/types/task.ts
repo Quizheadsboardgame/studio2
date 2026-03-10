@@ -2,6 +2,7 @@
 export type TaskStatus = 'Incomplete' | 'In Progress' | 'Needs Action' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskTab = 'Today' | 'Tomorrow' | 'Next Week';
+export type TaskUser = 'Owen' | 'Lucy' | 'Nick';
 
 export interface Task {
   id: string;
@@ -11,12 +12,14 @@ export interface Task {
   dueDate: string;
   notes: string;
   tab: TaskTab;
+  owner: TaskUser;
   createdAt: number;
 }
 
 export const STATUS_OPTIONS: TaskStatus[] = ['Incomplete', 'In Progress', 'Needs Action', 'Completed'];
 export const PRIORITY_OPTIONS: TaskPriority[] = ['High', 'Medium', 'Low'];
 export const TAB_OPTIONS: TaskTab[] = ['Today', 'Tomorrow', 'Next Week'];
+export const USER_OPTIONS: TaskUser[] = ['Owen', 'Lucy', 'Nick'];
 
 export const PRIORITY_ORDER: Record<TaskPriority, number> = {
   'High': 1,

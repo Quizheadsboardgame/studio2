@@ -6,7 +6,7 @@ import { useTasks } from "@/hooks/use-tasks";
 import { TaskDialog } from "@/components/task-dialog";
 import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
-import { Task, TAB_OPTIONS, STATUS_OPTIONS } from "@/types/task";
+import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,7 +19,7 @@ import {
   Sun, 
   Filter,
   CheckCircle2,
-  CalendarDays
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,8 @@ export default function Home() {
     setStatusFilter,
     activeTab,
     setActiveTab,
+    activeUser,
+    setActiveUser,
     viewMode,
     setViewMode,
     addTask,
@@ -56,11 +58,11 @@ export default function Home() {
   if (!isLoaded) return null;
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 transition-colors duration-300 font-body">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 font-body">
       <div className="max-w-7xl mx-auto px-4 py-8">
         
         {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
           <div>
             <h1 className="text-3xl font-bold font-headline text-slate-900 dark:text-slate-50 flex items-center gap-2">
               <CheckCircle2 className="text-blue-600 h-8 w-8" />
@@ -80,12 +82,36 @@ export default function Home() {
             </Button>
             <Button 
               onClick={addTask}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full px-6 shadow-lg shadow-green-600/20"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-6 shadow-lg shadow-blue-600/20"
             >
               <Plus className="h-5 w-5 mr-1" /> New Task
             </Button>
           </div>
         </header>
+
+        {/* User Switcher */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center gap-2 mb-3 text-slate-500 dark:text-slate-400">
+            <Users className="h-4 w-4" />
+            <span className="text-xs font-bold uppercase tracking-wider">Active User</span>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-1.5 rounded-2xl shadow-md border dark:border-slate-700 flex items-center gap-1">
+            {USER_OPTIONS.map((user) => (
+              <button
+                key={user}
+                onClick={() => setActiveUser(user)}
+                className={cn(
+                  "px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
+                  activeUser === user 
+                    ? "bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900 shadow-lg scale-105" 
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                )}
+              >
+                {user}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Navigation & Controls */}
         <div className="space-y-6">

@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Task, STATUS_OPTIONS, PRIORITY_OPTIONS, TAB_OPTIONS } from "@/types/task";
+import { Task, STATUS_OPTIONS, PRIORITY_OPTIONS, TAB_OPTIONS, USER_OPTIONS } from "@/types/task";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,14 +102,30 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              />
+              <Label htmlFor="owner">Assignee</Label>
+              <Select
+                value={formData.owner}
+                onValueChange={(val) => setFormData({ ...formData, owner: val as any })}
+              >
+                <SelectTrigger id="owner">
+                  <SelectValue placeholder="Select User" />
+                </SelectTrigger>
+                <SelectContent>
+                  {USER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="notes">Notes</Label>
