@@ -1,11 +1,9 @@
-
 "use client";
 
 import * as React from "react";
 import { Task, TaskStatus } from "@/types/task";
 import { TaskCard } from "./task-card";
 import { format, addDays, startOfDay, isSameDay, parseISO } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 interface TaskDiaryViewProps {
@@ -37,6 +35,10 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange }: TaskD
              } catch (e) {
                return task.dueDate === dayStr;
              }
+          }).sort((a, b) => {
+            if (!a.startTime) return 1;
+            if (!b.startTime) return -1;
+            return a.startTime.localeCompare(b.startTime);
           });
 
           const isToday = isSameDay(day, new Date());
@@ -60,13 +62,23 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange }: TaskD
               <div className="space-y-3">
                 {dayTasks.length > 0 ? (
                   dayTasks.map((task) => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task} 
-                      onEdit={onEdit} 
-                      onDelete={onDelete} 
-                      onStatusChange={onStatusChange}
-                    />
+                    <div key={task.id} className="relative">
+                      {task.startTime && (
+                        <div className="absolute -top-2 left-3 z-10">
+                          <span className="bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900 text-[10px] font-bold px-1.5 py-0.5 rounded-sm shadow-sm">
+                            {task.startTime}
+                          </span>
+                        </div>
+                      )}
+                      <div className={cn(task.startTime ? "pt-2" : "")}>
+                        <TaskCard 
+                          task={task} 
+                          onEdit={onEdit} 
+                          onDelete={onDelete} 
+                          onStatusChange={onStatusChange}
+                        />
+                      </div>
+                    </div>
                   ))
                 ) : (
                   <div className="py-8 border-2 border-dashed border-slate-100 dark:border-slate-800/50 rounded-xl flex items-center justify-center">

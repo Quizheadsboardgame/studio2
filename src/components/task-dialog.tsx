@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -118,14 +117,25 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               </Select>
             </div>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="dueDate">Due Date</Label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={formData.dueDate}
-              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="dueDate">Due Date</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="startTime">Start Time (Optional)</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={formData.startTime || ""}
+                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+              />
+            </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="notes">Notes</Label>
@@ -133,7 +143,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               id="notes"
               className="resize-none"
               rows={3}
-              value={formData.notes}
+              value={formData.notes || ""}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Add some details about this task..."
             />

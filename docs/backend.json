@@ -4,7 +4,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the Time-Based Task Manager application. This entity facilitates cross-device synchronization by uniquely identifying a user and linking their tasks to their account.",
+      "description": "Represents a user of the Time-Based Task Manager application.",
       "properties": {
         "id": {
           "type": "string",
@@ -12,11 +12,11 @@
         },
         "externalId": {
           "type": "string",
-          "description": "Identifier for the user from an external authentication system. This links the application's user record to the authentication provider's user record. (Relationship: User 1:N Task)"
+          "description": "Identifier for the user from an external authentication system."
         },
         "email": {
           "type": "string",
-          "description": "The email address of the user, primarily used for display or contact.",
+          "description": "The email address of the user.",
           "format": "email"
         },
         "createdAt": {
@@ -41,7 +41,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Task",
       "type": "object",
-      "description": "Represents a single task created and managed by a user within the Time-Based Task Manager application.",
+      "description": "Represents a single task created and managed by a user.",
       "properties": {
         "id": {
           "type": "string",
@@ -49,32 +49,40 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who owns this task, enabling tasks to be associated with specific user accounts for cross-device access. (Relationship: User 1:N Task)"
+          "description": "Reference to the User who owns this task."
         },
         "name": {
           "type": "string",
-          "description": "The short title or main description of the task."
+          "description": "The short title of the task."
         },
-        "description": {
+        "notes": {
           "type": "string",
-          "description": "Optional detailed notes or a longer description for the task."
+          "description": "Optional detailed notes for the task."
         },
         "status": {
           "type": "string",
-          "description": "The current completion status of the task (e.g., 'Incomplete', 'In Progress', 'Needs Action', 'Completed'). This is used for filtering and organizing tasks in different views."
+          "description": "The current completion status of the task."
         },
         "priority": {
           "type": "string",
-          "description": "The priority level assigned to the task (e.g., 'High', 'Medium', 'Low'). Used for sorting tasks."
+          "description": "The priority level assigned to the task."
         },
         "dueDate": {
           "type": "string",
-          "description": "The specific date and time by which the task is expected to be completed. Used for sorting.",
-          "format": "date-time"
+          "description": "The specific date for the task.",
+          "format": "date"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The scheduled time for the task (24h format HH:mm)."
         },
         "tab": {
           "type": "string",
-          "description": "The time-based category or tab the task belongs to (e.g., 'Today', 'Tomorrow', 'Next Week')."
+          "description": "The time-based category or tab the task belongs to."
+        },
+        "owner": {
+          "type": "string",
+          "description": "The person this task is assigned to."
         },
         "createdAt": {
           "type": "string",
@@ -94,6 +102,7 @@
         "status",
         "priority",
         "tab",
+        "owner",
         "createdAt",
         "updatedAt"
       ]
@@ -114,7 +123,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Root collection for user profiles. Each document's ID corresponds to the Firebase Authentication `uid` (externalId) of the user. Only the authenticated user can read/write their own profile."
+          "description": "Root collection for user profiles."
         }
       },
       {
@@ -124,20 +133,9 @@
           "schema": {
             "$ref": "#/backend/entities/Task"
           },
-          "description": "Subcollection storing tasks specific to a particular user. Each task document includes a denormalized 'userId' field matching the parent user's ID for authorization independence and simplified security rules.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns this task, derived from the parent collection path and matching `request.auth.uid`."
-            },
-            {
-              "name": "taskId",
-              "description": "The unique identifier for a specific task."
-            }
-          ]
+          "description": "Subcollection storing tasks specific to a particular user."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to support cross-device synchronization of user tasks by leveraging a robust, path-based ownership model, prioritizing Authorization Independence and secure Queryable Access Patterns (QAPs). The core idea is to establish a clear hierarchy where all user-specific data, including tasks, resides directly under the authenticated user's ID.\n\n**Authorization Independence:**\n1.  **User Profiles (`/users/{userId}`):** Each user's profile document is stored in the `users` collection, with the document ID (`{userId}`) matching the `request.auth.uid`. This ensures that a user can only access their own profile without needing to perform a `get()` operation on a parent document to establish ownership. The authorization rule simply compares `request.auth.uid` with the `{userId}` in the path.\n2.  **User Tasks (`/users/{userId}/tasks/{taskId}`):** Tasks are stored in a subcollection under the respective user's document. Crucially, the `Task` entity's `userId` field is **denormalized** to match the `{userId}` in the parent path. This means that every task document explicitly contains its owner's `userId`. Security rules for tasks can then directly evaluate `request.auth.uid == request.resource.data.userId` and `request.auth.uid == userId` (where `userId` is the path wildcard). This completely eliminates the need for `get()` calls on the parent `User` document for task authorization, enabling atomic operations (like creating a user and their first task in a single batch) and significantly simplifying rule debugging.\n\n**Queryable Access Patterns (QAPs):**\n1.  **User-Scoped Queries:** By nesting tasks under `/users/{userId}/tasks`, any list operation for tasks automatically scopes to a specific user. For instance, to retrieve all tasks for the current user, the client application queries `/users/$(request.auth.uid)/tasks`. The Firestore security rules will enforce that `request.auth.uid` matches the `{userId}` in the path (and the denormalized `userId` field within the task document). This intrinsic scoping ensures that `list` operations are inherently secure and efficient, as rules do not need to act as filters across a broader collection. Users can only list their own tasks, preventing unauthorized data access or costly queries that scan documents not owned by the requesting user.\n2.  **Structural Segregation:** All documents within the `/users/{userId}/tasks` subcollection share the same security posture (owned by `{userId}`). There are no mixed-access documents (e.g., public vs. private tasks) within the same collection, which keeps security rules simple and consistent.\n\nThis structure directly addresses the user's requirement for remembering tasks across different devices by securely storing all tasks in a server-side database (Firestore) linked to their authenticated user ID, accessible from any logged-in device."
+    ]
   }
 }

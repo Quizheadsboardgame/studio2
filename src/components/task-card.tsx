@@ -118,7 +118,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
               isHighPriorityDueToday ? "text-destructive font-bold" : "text-muted-foreground"
             )}>
               <Calendar className="w-3 h-3 mr-1" />
-              {formattedDate} {isHighPriorityDueToday && "(TODAY)"}
+              {formattedDate} {task.startTime && `at ${task.startTime}`} {isHighPriorityDueToday && "(TODAY)"}
             </div>
           </div>
           
