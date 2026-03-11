@@ -11,9 +11,10 @@ interface TaskListViewProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: any) => void;
+  onMoveDate: (id: string) => void;
 }
 
-export function TaskListView({ tasks, onEdit, onDelete, onStatusChange }: TaskListViewProps) {
+export function TaskListView({ tasks, onEdit, onDelete, onStatusChange, onMoveDate }: TaskListViewProps) {
   if (tasks.length === 0) {
     const placeholder = PlaceHolderImages.find(img => img.id === 'empty-tasks');
     return (
@@ -46,6 +47,7 @@ export function TaskListView({ tasks, onEdit, onDelete, onStatusChange }: TaskLi
           onEdit={onEdit} 
           onDelete={onDelete} 
           onStatusChange={onStatusChange}
+          onMoveDate={onMoveDate}
         />
       ))}
     </div>

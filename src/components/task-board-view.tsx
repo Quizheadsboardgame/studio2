@@ -10,9 +10,10 @@ interface TaskBoardViewProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: TaskStatus) => void;
+  onMoveDate: (id: string) => void;
 }
 
-export function TaskBoardView({ tasks, onEdit, onDelete, onStatusChange }: TaskBoardViewProps) {
+export function TaskBoardView({ tasks, onEdit, onDelete, onStatusChange, onMoveDate }: TaskBoardViewProps) {
   const columns: Record<TaskStatus, Task[]> = {
     'Incomplete': [],
     'In Progress': [],
@@ -67,6 +68,7 @@ export function TaskBoardView({ tasks, onEdit, onDelete, onStatusChange }: TaskB
                 onEdit={onEdit} 
                 onDelete={onDelete} 
                 onStatusChange={onStatusChange}
+                onMoveDate={onMoveDate}
                 isBoard
               />
             ))}

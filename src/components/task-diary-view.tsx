@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -30,9 +31,10 @@ interface TaskDiaryViewProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: TaskStatus) => void;
+  onMoveDate: (id: string) => void;
 }
 
-export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange }: TaskDiaryViewProps) {
+export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveDate }: TaskDiaryViewProps) {
   const [viewType, setViewType] = React.useState<'week' | 'month'>('week');
   const [baseDate, setBaseDate] = React.useState<Date>(new Date());
   const [days, setDays] = React.useState<Date[]>([]);
@@ -201,6 +203,7 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange }: TaskD
                           onEdit={onEdit} 
                           onDelete={onDelete} 
                           onStatusChange={onStatusChange}
+                          onMoveDate={onMoveDate}
                           isBoard={viewType === 'month'} // Compact mode for month view
                         />
                       </div>

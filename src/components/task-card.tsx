@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -5,7 +6,7 @@ import { Task } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check } from "lucide-react";
+import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
@@ -15,14 +16,17 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: any) => void;
+  onMoveDate: (id: string) => void;
   isBoard?: boolean;
 }
 
-export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, isBoard }: TaskCardProps) {
   const [todayStr, setTodayStr] = React.useState<string | null>(null);
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
   const [touchOffset, setTouchOffset] = React.useState<number>(0);
-  const isSwiping = touchOffset < 0;
+  
+  const isSwipingLeft = touchOffset < 0;
+  const isSwipingRight = touchOffset > 0;
 
   // Set today's date only on the client to avoid hydration mismatch
   React.useEffect(() => {
@@ -64,25 +68,30 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
 
   // Touch handlers for swipe
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (task.status === 'Completed') return;
     setTouchStart(e.targetTouches[0].clientX);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStart === null || task.status === 'Completed') return;
+    if (touchStart === null) return;
     const currentTouch = e.targetTouches[0].clientX;
     const diff = currentTouch - touchStart;
     
-    // Only allow left swipe (negative offset)
-    if (diff < 0) {
-      setTouchOffset(diff);
-    }
+    // Check if we can swipe (can't swipe left if already completed)
+    if (diff < 0 && task.status === 'Completed') return;
+    
+    setTouchOffset(diff);
   };
 
   const handleTouchEnd = () => {
+    // Swipe Left to Complete
     if (touchOffset < -100 && task.status !== 'Completed') {
       onStatusChange(task.id, 'Completed');
+    } 
+    // Swipe Right to Delay
+    else if (touchOffset > 100) {
+      onMoveDate(task.id);
     }
+    
     setTouchStart(null);
     setTouchOffset(0);
   };
@@ -98,16 +107,29 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
 
   return (
     <div className="relative overflow-hidden rounded-lg group">
-      {/* Swipe Action Background (Visible when swiping left) */}
+      {/* Swipe Left Background (Complete) */}
       <div 
         className={cn(
           "absolute inset-0 bg-green-500 flex items-center justify-end px-6 transition-opacity",
-          isSwiping ? "opacity-100" : "opacity-0"
+          isSwipingLeft ? "opacity-100" : "opacity-0"
         )}
       >
         <div className="flex flex-col items-center text-white">
           <Check className="h-6 w-6" />
           <span className="text-[10px] font-bold uppercase">Complete</span>
+        </div>
+      </div>
+
+      {/* Swipe Right Background (Delay) */}
+      <div 
+        className={cn(
+          "absolute inset-0 bg-amber-500 flex items-center justify-start px-6 transition-opacity",
+          isSwipingRight ? "opacity-100" : "opacity-0"
+        )}
+      >
+        <div className="flex flex-col items-center text-white">
+          <CalendarPlus className="h-6 w-6" />
+          <span className="text-[10px] font-bold uppercase">Next Day</span>
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -52,7 +53,8 @@ export default function Home() {
     addTask,
     updateTask,
     deleteTask,
-    moveTaskStatus
+    moveTaskStatus,
+    moveTaskDate
   } = useTasks();
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
@@ -247,6 +249,7 @@ export default function Home() {
                 onEdit={setEditingTask} 
                 onDelete={deleteTask}
                 onStatusChange={moveTaskStatus}
+                onMoveDate={moveTaskDate}
               />
             ) : viewMode === 'board' ? (
               <TaskBoardView 
@@ -254,6 +257,7 @@ export default function Home() {
                 onEdit={setEditingTask} 
                 onDelete={deleteTask}
                 onStatusChange={moveTaskStatus}
+                onMoveDate={moveTaskDate}
               />
             ) : (
               <TaskDiaryView 
@@ -261,6 +265,7 @@ export default function Home() {
                 onEdit={setEditingTask} 
                 onDelete={deleteTask}
                 onStatusChange={moveTaskStatus}
+                onMoveDate={moveTaskDate}
               />
             )}
           </main>

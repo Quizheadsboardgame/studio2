@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -86,15 +87,10 @@ export function useTasks() {
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         
         // Tab Filtering logic
-        // Non-recurring: exact tab match
-        // Recurring: If Daily or Weekday, they appear in all future-relevant tabs
         const isRecurringTodayPlus = task.recurrence !== 'None';
         let matchesTab = task.tab === activeTab;
         
         if (isRecurringTodayPlus && viewMode !== 'diary') {
-           // If it's a recurring task, we show it in its "next" tab, 
-           // and if it's Daily/Weekday, it's effectively "due" in every tab 
-           // after its start date.
            if (activeTab === 'Today' && (task.dueDate <= todayStr)) matchesTab = true;
            if (activeTab === 'Tomorrow' && (task.dueDate <= tomorrowStr)) matchesTab = true;
            if (activeTab === 'Next Week') matchesTab = true;
@@ -174,8 +170,6 @@ export function useTasks() {
           break;
         case 'Monday to Friday':
           const day = getDay(currentDueDate);
-          // 5 is Friday, so next is Monday (add 3)
-          // 6 is Saturday, so next is Monday (add 2)
           if (day === 5) nextDate = addDays(currentDueDate, 3);
           else if (day === 6) nextDate = addDays(currentDueDate, 2);
           else nextDate = addDays(currentDueDate, 1);
@@ -211,6 +205,31 @@ export function useTasks() {
     });
   };
 
+  const moveTaskDate = (id: string) => {
+    if (!db || !user) return;
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const currentDueDate = parseISO(task.dueDate);
+    const nextDate = addDays(currentDueDate, 1);
+    const nextDateStr = format(nextDate, 'yyyy-MM-dd');
+
+    // Calculate new tab based on the new date
+    let newTab: TaskTab = 'Next Week';
+    if (nextDateStr === todayStr) {
+      newTab = 'Today';
+    } else if (nextDateStr === tomorrowStr) {
+      newTab = 'Tomorrow';
+    }
+
+    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
+    updateDocumentNonBlocking(taskRef, { 
+      dueDate: nextDateStr,
+      tab: newTab,
+      updatedAt: new Date().toISOString() 
+    });
+  };
+
   return {
     tasks,
     filteredTasks: filteredAndSortedTasks,
@@ -228,6 +247,7 @@ export function useTasks() {
     addTask,
     updateTask,
     deleteTask,
-    moveTaskStatus
+    moveTaskStatus,
+    moveTaskDate
   };
 }
