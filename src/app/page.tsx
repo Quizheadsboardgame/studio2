@@ -9,7 +9,7 @@ import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { TaskDiaryView } from "@/components/task-diary-view";
 import { UserStats } from "@/components/user-stats";
-import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS } from "@/types/task";
+import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -74,6 +74,10 @@ export default function Home() {
     if (template) {
       setEditingTask(template);
     }
+  };
+
+  const getTabOutstandingCount = (tab: TaskTab) => {
+    return tasks.filter(t => t.owner === activeUser && t.tab === tab && t.status !== 'Completed').length;
   };
 
   if (!isLoaded) {
@@ -160,27 +164,47 @@ export default function Home() {
         <div className="space-y-6">
           
           {/* Time Tabs */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
-              {TAB_OPTIONS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  disabled={viewMode === 'diary'}
-                  className={cn(
-                    "px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
-                    activeTab === tab && viewMode !== 'diary'
-                      ? "bg-blue-600 text-white shadow-md scale-105" 
-                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700",
-                    viewMode === 'diary' && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {tab}
-                </button>
-              ))}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Outstanding Tasks</span>
+              </div>
+              <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
+                {TAB_OPTIONS.map((tab) => {
+                  const count = getTabOutstandingCount(tab);
+                  const isActive = activeTab === tab && viewMode !== 'diary';
+                  
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      disabled={viewMode === 'diary'}
+                      className={cn(
+                        "relative px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 min-w-[100px]",
+                        isActive
+                          ? "bg-blue-600 text-white shadow-md scale-105" 
+                          : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700",
+                        viewMode === 'diary' && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <span className="relative z-10">{tab}</span>
+                      {count > 0 && (
+                        <span className={cn(
+                          "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
+                          isActive 
+                            ? "bg-white text-blue-600 border-blue-600" 
+                            : "bg-blue-600 text-white border-white dark:border-slate-800"
+                        )}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border dark:border-slate-700 flex items-center">
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border dark:border-slate-700 flex items-center h-12">
               <button 
                 onClick={() => setViewMode('list')}
                 className={cn(
