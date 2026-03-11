@@ -9,7 +9,7 @@ import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { TaskDiaryView } from "@/components/task-diary-view";
 import { UserStats } from "@/components/user-stats";
-import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab } from "@/types/task";
+import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab, TaskUser } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -80,6 +80,10 @@ export default function Home() {
     return tasks.filter(t => t.owner === activeUser && t.tab === tab && t.status !== 'Completed').length;
   };
 
+  const getUserOutstandingCount = (userName: TaskUser) => {
+    return tasks.filter(t => t.owner === userName && t.status !== 'Completed').length;
+  };
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
@@ -147,20 +151,38 @@ export default function Home() {
         <div className="flex flex-col items-center mb-8">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-md">
             <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
-              {USER_OPTIONS.map((userName) => (
-                <TabsTrigger 
-                  key={userName} 
-                  value={userName}
-                  className={cn(
-                    "rounded-xl font-bold transition-all data-[state=active]:text-white",
-                    userName === 'Owen' && "data-[state=active]:bg-blue-600",
-                    userName === 'Lucy' && "data-[state=active]:bg-pink-500",
-                    userName === 'Nick' && "data-[state=active]:bg-emerald-500"
-                  )}
-                >
-                  {userName}
-                </TabsTrigger>
-              ))}
+              {USER_OPTIONS.map((userName) => {
+                const count = getUserOutstandingCount(userName);
+                const isActive = activeUser === userName;
+                
+                return (
+                  <TabsTrigger 
+                    key={userName} 
+                    value={userName}
+                    className={cn(
+                      "relative rounded-xl font-bold transition-all data-[state=active]:text-white",
+                      userName === 'Owen' && "data-[state=active]:bg-blue-600",
+                      userName === 'Lucy' && "data-[state=active]:bg-pink-500",
+                      userName === 'Nick' && "data-[state=active]:bg-emerald-500"
+                    )}
+                  >
+                    <span className="relative z-10">{userName}</span>
+                    {count > 0 && (
+                      <span className={cn(
+                        "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
+                        isActive 
+                          ? "bg-white border-white shadow-sm" 
+                          : "bg-slate-900 text-white border-white dark:border-slate-800",
+                        isActive && userName === 'Owen' && "text-blue-600",
+                        isActive && userName === 'Lucy' && "text-pink-500",
+                        isActive && userName === 'Nick' && "text-emerald-500"
+                      )}>
+                        {count}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </Tabs>
         </div>
