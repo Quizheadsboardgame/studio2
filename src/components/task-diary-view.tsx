@@ -3,8 +3,27 @@
 import * as React from "react";
 import { Task, TaskStatus } from "@/types/task";
 import { TaskCard } from "./task-card";
-import { format, addDays, startOfDay, isSameDay, parseISO, getDay } from "date-fns";
+import { 
+  format, 
+  addDays, 
+  startOfDay, 
+  isSameDay, 
+  parseISO, 
+  getDay, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  startOfWeek, 
+  endOfWeek,
+  addMonths,
+  subMonths,
+  subDays,
+  isSameMonth
+} from "date-fns";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, LayoutGrid } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TaskDiaryViewProps {
   tasks: Task[];
@@ -14,31 +33,52 @@ interface TaskDiaryViewProps {
 }
 
 export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange }: TaskDiaryViewProps) {
+  const [viewType, setViewType] = React.useState<'week' | 'month'>('week');
+  const [baseDate, setBaseDate] = React.useState<Date>(new Date());
   const [days, setDays] = React.useState<Date[]>([]);
 
   React.useEffect(() => {
-    const today = startOfDay(new Date());
-    const weekDays = Array.from({ length: 7 }, (_, i) => addDays(today, i));
-    setDays(weekDays);
-  }, []);
+    const start = startOfDay(baseDate);
+    let intervalDays: Date[] = [];
 
-  if (days.length === 0) return null;
+    if (viewType === 'week') {
+      // 7 days starting from baseDate
+      intervalDays = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+    } else {
+      // Full month grid (including padding from prev/next months)
+      const monthStart = startOfMonth(start);
+      const monthEnd = endOfMonth(start);
+      const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday
+      const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 }); // Monday
+      
+      intervalDays = eachDayOfInterval({
+        start: calendarStart,
+        end: calendarEnd,
+      });
+    }
+    setDays(intervalDays);
+  }, [baseDate, viewType]);
+
+  const navigate = (direction: 'prev' | 'next') => {
+    if (viewType === 'week') {
+      setBaseDate(prev => direction === 'next' ? addDays(prev, 7) : subDays(prev, 7));
+    } else {
+      setBaseDate(prev => direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1));
+    }
+  };
 
   const isTaskScheduledForDay = (task: Task, day: Date) => {
     const taskDueDate = parseISO(task.dueDate);
-    const dayStr = format(day, 'yyyy-MM-dd');
     
     // Exact match
     if (isSameDay(taskDueDate, day)) return true;
 
-    // Recurring logic: Task appears on future days if it hasn't been completed for that date yet
-    // Note: We only show future occurrences in the Diary if it's recurring
+    // Recurring logic
     if (task.recurrence === 'None') return false;
     
-    // Only show if the current task instance is due on or before this day
+    // Only show if the task started on or before this day
     if (taskDueDate > day) return false;
 
-    // Recurring patterns
     const dayOfWeek = getDay(day);
     switch (task.recurrence) {
       case 'Daily':
@@ -54,9 +94,62 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange }: TaskD
     }
   };
 
+  if (days.length === 0) return null;
+
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-500 pb-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+    <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-10">
+      {/* Diary Controls */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700 shadow-sm">
+        <div className="flex items-center gap-4">
+          <Tabs value={viewType} onValueChange={(v) => setViewType(v as any)} className="w-auto">
+            <TabsList className="grid w-full grid-cols-2 h-9 p-1">
+              <TabsTrigger value="week" className="text-xs">
+                <LayoutGrid className="h-3 w-3 mr-1.5" /> Week
+              </TabsTrigger>
+              <TabsTrigger value="month" className="text-xs">
+                <CalendarIcon className="h-3 w-3 mr-1.5" /> Month
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => navigate('prev')} className="h-8 w-8 rounded-full">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h2 className="text-sm font-bold min-w-[120px] text-center">
+              {viewType === 'week' 
+                ? `${format(days[0], 'MMM d')} - ${format(days[days.length - 1], 'MMM d, yyyy')}`
+                : format(baseDate, 'MMMM yyyy')
+              }
+            </h2>
+            <Button variant="outline" size="icon" onClick={() => navigate('next')} className="h-8 w-8 rounded-full">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setBaseDate(new Date())}
+          className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+        >
+          Jump to Today
+        </Button>
+      </div>
+
+      {/* Schedule Grid */}
+      <div className={cn(
+        "grid gap-4",
+        viewType === 'week' ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-7" : "grid-cols-7"
+      )}>
+        {/* Month Header - Days of Week */}
+        {viewType === 'month' && ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+          <div key={day} className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 py-2">
+            {day}
+          </div>
+        ))}
+
         {days.map((day) => {
           const dayStr = format(day, 'yyyy-MM-dd');
           const dayTasks = tasks.filter(task => isTaskScheduledForDay(task, day))
@@ -67,48 +160,58 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange }: TaskD
             });
 
           const isToday = isSameDay(day, new Date());
+          const isCurrentMonth = isSameMonth(day, baseDate);
 
           return (
-            <div key={dayStr} className="flex flex-col gap-3 min-h-[200px]">
+            <div 
+              key={`${dayStr}-${viewType}`} 
+              className={cn(
+                "flex flex-col gap-2 min-h-[120px] transition-all",
+                viewType === 'month' && !isCurrentMonth && "opacity-30 grayscale pointer-events-none"
+              )}
+            >
               <div className={cn(
-                "px-3 py-2 rounded-lg border text-center transition-colors",
+                "px-2 py-1.5 rounded-lg border text-center transition-all",
                 isToday 
-                  ? "bg-blue-600 border-blue-600 text-white shadow-md" 
-                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                  ? "bg-blue-600 border-blue-600 text-white shadow-md scale-105 z-10" 
+                  : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700"
               )}>
-                <span className="block text-[10px] uppercase font-bold tracking-wider opacity-80">
+                <span className="block text-[10px] uppercase font-bold tracking-tight opacity-70">
                   {format(day, 'EEE')}
                 </span>
-                <span className="block text-lg font-bold">
+                <span className="block text-base font-bold">
                   {format(day, 'd')}
                 </span>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2 max-h-[250px] overflow-y-auto no-scrollbar">
                 {dayTasks.length > 0 ? (
                   dayTasks.map((task) => (
                     <div key={`${task.id}-${dayStr}`} className="relative">
                       {task.startTime && (
-                        <div className="absolute -top-2 left-3 z-10">
-                          <span className="bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900 text-[10px] font-bold px-1.5 py-0.5 rounded-sm shadow-sm">
+                        <div className="absolute -top-1.5 left-2 z-10">
+                          <span className="bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900 text-[8px] font-bold px-1 py-0.5 rounded-sm shadow-sm">
                             {task.startTime}
                           </span>
                         </div>
                       )}
-                      <div className={cn(task.startTime ? "pt-2" : "")}>
+                      <div className={cn(task.startTime ? "pt-1.5" : "")}>
                         <TaskCard 
                           task={task} 
                           onEdit={onEdit} 
                           onDelete={onDelete} 
                           onStatusChange={onStatusChange}
+                          isBoard={viewType === 'month'} // Compact mode for month view
                         />
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="py-8 border-2 border-dashed border-slate-100 dark:border-slate-800/50 rounded-xl flex items-center justify-center">
-                    <span className="text-[10px] text-slate-400 dark:text-slate-600 font-medium uppercase tracking-tight">Free Day</span>
-                  </div>
+                  viewType === 'week' && (
+                    <div className="py-8 border-2 border-dashed border-slate-100 dark:border-slate-800/50 rounded-xl flex items-center justify-center">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-600 font-medium uppercase tracking-tight">Free Day</span>
+                    </div>
+                  )
                 )}
               </div>
             </div>
