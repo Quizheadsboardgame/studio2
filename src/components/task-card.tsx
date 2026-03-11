@@ -5,7 +5,7 @@ import { Task } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock } from "lucide-react";
+import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
@@ -19,6 +19,18 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: TaskCardProps) {
+  const [todayStr, setTodayStr] = React.useState<string | null>(null);
+
+  // Set today's date only on the client to avoid hydration mismatch
+  React.useEffect(() => {
+    setTodayStr(new Date().toISOString().split('T')[0]);
+  }, []);
+
+  const isHighPriorityDueToday = React.useMemo(() => {
+    if (!todayStr) return false;
+    return task.priority === 'High' && task.dueDate === todayStr && task.status !== 'Completed';
+  }, [task.priority, task.dueDate, task.status, todayStr]);
+
   const priorityColor = {
     High: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
     Medium: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
@@ -27,7 +39,9 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
 
   const statusIcon = task.status === 'Completed' 
     ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-    : <Clock className="w-4 h-4 text-muted-foreground" />;
+    : isHighPriorityDueToday 
+      ? <AlertCircle className="w-4 h-4 text-destructive animate-pulse" />
+      : <Clock className="w-4 h-4 text-muted-foreground" />;
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData("taskId", task.id);
@@ -47,8 +61,11 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
       draggable={isBoard}
       onDragStart={handleDragStart}
       className={cn(
-        "group transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
-        task.status === 'Completed' && "opacity-75"
+        "group transition-all hover:shadow-md cursor-grab active:cursor-grabbing border-2",
+        task.status === 'Completed' ? "opacity-75" : "opacity-100",
+        isHighPriorityDueToday 
+          ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
+          : "border-transparent"
       )}
     >
       <CardContent className="p-3">
@@ -58,7 +75,8 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
             <div className="flex-1 min-w-0">
               <h3 className={cn(
                 "text-sm font-semibold truncate",
-                task.status === 'Completed' && "line-through text-muted-foreground"
+                task.status === 'Completed' && "line-through text-muted-foreground",
+                isHighPriorityDueToday && "text-destructive"
               )}>
                 {task.name}
               </h3>
@@ -95,9 +113,12 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
             <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", priorityColor)}>
               {task.priority}
             </Badge>
-            <div className="flex items-center text-[10px] text-muted-foreground">
+            <div className={cn(
+              "flex items-center text-[10px]",
+              isHighPriorityDueToday ? "text-destructive font-bold" : "text-muted-foreground"
+            )}>
               <Calendar className="w-3 h-3 mr-1" />
-              {formattedDate}
+              {formattedDate} {isHighPriorityDueToday && "(TODAY)"}
             </div>
           </div>
           
