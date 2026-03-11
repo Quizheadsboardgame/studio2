@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Task, STATUS_OPTIONS, PRIORITY_OPTIONS, TAB_OPTIONS, USER_OPTIONS } from "@/types/task";
+import { Task, STATUS_OPTIONS, PRIORITY_OPTIONS, TAB_OPTIONS, USER_OPTIONS, RECURRENCE_OPTIONS } from "@/types/task";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Repeat } from "lucide-react";
 
 interface TaskDialogProps {
   task: Task | null;
@@ -136,6 +137,24 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
               />
             </div>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="recurrence" className="flex items-center gap-1.5">
+              <Repeat className="h-3.5 w-3.5" /> Recurrence
+            </Label>
+            <Select
+              value={formData.recurrence || 'None'}
+              onValueChange={(val) => setFormData({ ...formData, recurrence: val as any })}
+            >
+              <SelectTrigger id="recurrence">
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent>
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="notes">Notes</Label>

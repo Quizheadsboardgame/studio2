@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Task, TaskStatus, TaskTab, TaskUser, PRIORITY_ORDER } from '@/types/task';
+import { Task, TaskStatus, TaskTab, TaskUser, TaskRecurrence, PRIORITY_ORDER } from '@/types/task';
 import { 
   useUser, 
   useFirestore, 
@@ -15,6 +14,7 @@ import {
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
+import { addDays, addWeeks, addMonths, parseISO, format } from 'date-fns';
 
 export function useTasks() {
   const { user, isUserLoading } = useUser();
@@ -75,6 +75,7 @@ export function useTasks() {
       notes: '',
       tab: activeTab,
       owner: activeUser,
+      recurrence: 'None' as TaskRecurrence,
       createdAt: now,
       updatedAt: now,
       userId: user.uid // Denormalized for security rules as per backend.json
@@ -99,8 +100,48 @@ export function useTasks() {
   };
 
   const moveTaskStatus = (id: string, newStatus: TaskStatus) => {
-    if (!db || !user) return;
+    if (!db || !user || !tasksQuery) return;
+    
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
+    
+    // If moving to completed and is recurring, create a new task for the next instance
+    if (newStatus === 'Completed' && task.recurrence && task.recurrence !== 'None') {
+      let nextDate: Date;
+      const currentDueDate = parseISO(task.dueDate);
+      
+      switch (task.recurrence) {
+        case 'Daily':
+          nextDate = addDays(currentDueDate, 1);
+          break;
+        case 'Weekly':
+          nextDate = addWeeks(currentDueDate, 1);
+          break;
+        case 'Monthly':
+          nextDate = addMonths(currentDueDate, 1);
+          break;
+        default:
+          nextDate = currentDueDate;
+      }
+
+      const nextDueDateStr = format(nextDate, 'yyyy-MM-dd');
+      const now = new Date().toISOString();
+      
+      const nextTaskData = {
+        ...task,
+        status: 'Incomplete' as TaskStatus,
+        dueDate: nextDueDateStr,
+        createdAt: now,
+        updatedAt: now,
+      };
+      // remove the id so it gets a new one
+      const { id: _, ...dataForNewTask } = nextTaskData;
+      
+      addDocumentNonBlocking(tasksQuery, dataForNewTask);
+    }
+
     updateDocumentNonBlocking(taskRef, { 
       status: newStatus, 
       updatedAt: new Date().toISOString() 

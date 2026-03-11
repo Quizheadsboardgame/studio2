@@ -84,6 +84,11 @@
           "type": "string",
           "description": "The person this task is assigned to."
         },
+        "recurrence": {
+          "type": "string",
+          "description": "The recurrence pattern for the task.",
+          "enum": ["None", "Daily", "Weekly", "Monthly"]
+        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp indicating when the task was created.",

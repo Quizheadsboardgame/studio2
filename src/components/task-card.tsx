@@ -5,7 +5,7 @@ import { Task } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
@@ -73,13 +73,18 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
           <div className="flex items-start gap-2 flex-1">
             <span className="mt-1">{statusIcon}</span>
             <div className="flex-1 min-w-0">
-              <h3 className={cn(
-                "text-sm font-semibold truncate",
-                task.status === 'Completed' && "line-through text-muted-foreground",
-                isHighPriorityDueToday && "text-destructive"
-              )}>
-                {task.name}
-              </h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className={cn(
+                  "text-sm font-semibold truncate",
+                  task.status === 'Completed' && "line-through text-muted-foreground",
+                  isHighPriorityDueToday && "text-destructive"
+                )}>
+                  {task.name}
+                </h3>
+                {task.recurrence && task.recurrence !== 'None' && (
+                  <Repeat className="h-3 w-3 text-blue-500" title={`Recurring: ${task.recurrence}`} />
+                )}
+              </div>
               {task.notes && (
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                   {task.notes}
