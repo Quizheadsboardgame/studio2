@@ -4,8 +4,9 @@ import * as React from "react";
 import { Task, TaskUser, USER_OPTIONS } from "@/types/task";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Flame, Target, Star, Award } from "lucide-react";
+import { Trophy, Flame, Target, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface UserStatsProps {
   tasks: Task[];
@@ -13,11 +14,22 @@ interface UserStatsProps {
 }
 
 export function UserStats({ tasks, activeUser }: UserStatsProps) {
+  const [todayStr, setTodayStr] = React.useState<string>("");
+
+  // Set today's date only on the client to avoid hydration mismatch
+  React.useEffect(() => {
+    setTodayStr(format(new Date(), 'yyyy-MM-dd'));
+  }, []);
+
   const getStats = (user: TaskUser) => {
-    const userTasks = tasks.filter((t) => t.owner === user);
-    const completed = userTasks.filter((t) => t.status === "Completed").length;
-    const total = userTasks.length;
-    // If 0 tasks, completion is 100% (clean slate)
+    if (!todayStr) return { completed: 0, total: 0, percentage: 100 };
+    
+    // Filter tasks specifically for this user and for TODAY'S date
+    const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
+    const completed = userTasksForToday.filter((t) => t.status === "Completed").length;
+    const total = userTasksForToday.length;
+    
+    // If 0 tasks for today, completion is 100% (clean slate)
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
     return { completed, total, percentage };
   };
@@ -25,7 +37,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
   const activeStats = getStats(activeUser);
 
   const encouragingWords = React.useMemo(() => {
-    if (activeStats.total === 0) return "Add your first task and let's get moving!";
+    if (activeStats.total === 0) return "No tasks scheduled for today. Enjoy the clean slate!";
     if (activeStats.percentage === 0) return "Let's kick things off! You've got this.";
     if (activeStats.percentage < 40) return "Great start! Every small step counts.";
     if (activeStats.percentage < 70) return "Over the hump! Keep that momentum building.";
@@ -106,7 +118,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                     {stat.name}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-semibold">
-                    {stat.total === 0 ? "0 tasks (Clean slate!)" : `${stat.completed} of ${stat.total} tasks`}
+                    {stat.total === 0 ? "0 tasks today (Clean!)" : `${stat.completed} of ${stat.total} today`}
                   </p>
                 </div>
               </div>
@@ -114,7 +126,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                 <div className="text-right">
                   <span className="text-sm font-black tabular-nums">{stat.percentage}%</span>
                 </div>
-                {index === 0 && (
+                {index === 0 && stat.percentage > 0 && (
                   <Flame className="h-4 w-4 text-orange-500 animate-bounce" />
                 )}
               </div>
