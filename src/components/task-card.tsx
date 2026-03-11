@@ -39,15 +39,17 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
 
   const priorityColor = {
     High: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
-    Medium: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-red-800",
+    Medium: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
     Low: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
   }[task.priority];
 
   const statusIcon = task.status === 'Completed' 
     ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-    : isHighPriorityDueToday 
-      ? <AlertCircle className="w-4 h-4 text-destructive animate-pulse" />
-      : <Clock className="w-4 h-4 text-muted-foreground" />;
+    : task.status === 'In Progress'
+      ? <Clock className="w-4 h-4 text-orange-500 animate-pulse" />
+      : isHighPriorityDueToday 
+        ? <AlertCircle className="w-4 h-4 text-destructive animate-pulse" />
+        : <Clock className="w-4 h-4 text-muted-foreground" />;
 
   const handleDragStart = (e: React.DragEvent) => {
     if (!isBoard) return;
@@ -150,9 +152,11 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
           isBoard && "cursor-grab active:cursor-grabbing",
           task.status === 'Completed' 
             ? "border-green-200 bg-green-50/50 dark:bg-green-950/10 opacity-75" 
-            : isHighPriorityDueToday 
-              ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
-              : "border-transparent"
+            : task.status === 'In Progress'
+              ? "border-orange-200 bg-orange-50/50 dark:bg-orange-950/10 shadow-sm"
+              : isHighPriorityDueToday 
+                ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
+                : "border-transparent"
         )}
       >
         <CardContent className="p-3">
@@ -164,7 +168,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                   <h3 className={cn(
                     "text-sm font-semibold truncate",
                     task.status === 'Completed' && "line-through text-muted-foreground",
-                    isHighPriorityDueToday && "text-destructive"
+                    isHighPriorityDueToday && task.status !== 'In Progress' && "text-destructive"
                   )}>
                     {task.name}
                   </h3>
@@ -215,7 +219,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
               </Badge>
               <div className={cn(
                 "flex items-center text-[10px]",
-                isHighPriorityDueToday ? "text-destructive font-bold" : "text-muted-foreground"
+                isHighPriorityDueToday && task.status !== 'In Progress' ? "text-destructive font-bold" : "text-muted-foreground"
               )}>
                 <Calendar className="w-3 h-3 mr-1" />
                 {formattedDate} {task.startTime && `at ${task.startTime}`} {isHighPriorityDueToday && "(TODAY)"}
