@@ -17,7 +17,8 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     const userTasks = tasks.filter((t) => t.owner === user);
     const completed = userTasks.filter((t) => t.status === "Completed").length;
     const total = userTasks.length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    // If 0 tasks, completion is 100% (clean slate)
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
     return { completed, total, percentage };
   };
 
@@ -36,8 +37,6 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     name: user,
     ...getStats(user),
   })).sort((a, b) => b.percentage - a.percentage);
-
-  const leader = allUserStats[0];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -107,7 +106,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                     {stat.name}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-semibold">
-                    {stat.completed} tasks
+                    {stat.total === 0 ? "0 tasks (Clean slate!)" : `${stat.completed} of ${stat.total} tasks`}
                   </p>
                 </div>
               </div>
@@ -115,7 +114,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                 <div className="text-right">
                   <span className="text-sm font-black tabular-nums">{stat.percentage}%</span>
                 </div>
-                {index === 0 && stat.percentage > 0 && (
+                {index === 0 && (
                   <Flame className="h-4 w-4 text-orange-500 animate-bounce" />
                 )}
               </div>
