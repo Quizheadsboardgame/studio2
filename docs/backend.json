@@ -78,7 +78,7 @@
         },
         "tab": {
           "type": "string",
-          "description": "The time-based category or tab the task belongs to."
+          "description": "The time-based category or tab the task belongs to (Today, Tomorrow, or Later)."
         },
         "owner": {
           "type": "string",

@@ -56,12 +56,13 @@ export function useTasks() {
   /**
    * Automatic Tab Synchronization
    * Ensures the 'tab' property matches the 'dueDate' in reality.
+   * 'Later' encompasses any date after tomorrow.
    */
   useEffect(() => {
     if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
 
     tasks.forEach(task => {
-      let correctTab: TaskTab = 'Next Week';
+      let correctTab: TaskTab = 'Later';
       
       if (task.dueDate === todayStr || task.dueDate < todayStr) {
         correctTab = 'Today';
@@ -95,7 +96,7 @@ export function useTasks() {
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         
-        // Tab Filtering logic - Relying on the sync effect is cleaner and avoids duplicates
+        // Tab Filtering logic
         let matchesTab = task.tab === activeTab;
         if (viewMode === 'diary') matchesTab = true;
         
@@ -125,7 +126,7 @@ export function useTasks() {
 
     if (activeTab === 'Tomorrow') {
       defaultDueDate = tomorrowStr;
-    } else if (activeTab === 'Next Week') {
+    } else if (activeTab === 'Later') {
       defaultDueDate = format(addDays(now, 2), 'yyyy-MM-dd');
     }
     
@@ -204,7 +205,7 @@ export function useTasks() {
       const nextDueDateStr = format(nextDate, 'yyyy-MM-dd');
       const now = new Date().toISOString();
       
-      // DE-DUPLICATION CHECK: Before adding the next instance, ensure it doesn't already exist
+      // DE-DUPLICATION CHECK
       const alreadyExists = tasks.some(t => 
         t.name.trim().toLowerCase() === task.name.trim().toLowerCase() && 
         t.dueDate === nextDueDateStr && 
@@ -241,7 +242,7 @@ export function useTasks() {
     const nextDateStr = format(nextDate, 'yyyy-MM-dd');
 
     // Calculate new tab based on the new date
-    let newTab: TaskTab = 'Next Week';
+    let newTab: TaskTab = 'Later';
     if (nextDateStr === todayStr) {
       newTab = 'Today';
     } else if (nextDateStr === tomorrowStr) {

@@ -1,6 +1,6 @@
 export type TaskStatus = 'Incomplete' | 'In Progress' | 'Needs Action' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
-export type TaskTab = 'Today' | 'Tomorrow' | 'Next Week';
+export type TaskTab = 'Today' | 'Tomorrow' | 'Later';
 export type TaskUser = 'Owen' | 'Lucy' | 'Nick';
 export type TaskRecurrence = 'None' | 'Daily' | 'Weekly' | 'Monthly' | 'Monday to Friday';
 
@@ -23,7 +23,7 @@ export interface Task {
 
 export const STATUS_OPTIONS: TaskStatus[] = ['Incomplete', 'In Progress', 'Needs Action', 'Completed'];
 export const PRIORITY_OPTIONS: TaskPriority[] = ['High', 'Medium', 'Low'];
-export const TAB_OPTIONS: TaskTab[] = ['Today', 'Tomorrow', 'Next Week'];
+export const TAB_OPTIONS: TaskTab[] = ['Today', 'Tomorrow', 'Later'];
 export const USER_OPTIONS: TaskUser[] = ['Owen', 'Lucy', 'Nick'];
 export const RECURRENCE_OPTIONS: TaskRecurrence[] = ['None', 'Daily', 'Weekly', 'Monthly', 'Monday to Friday'];
 
