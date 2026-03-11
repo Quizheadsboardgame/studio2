@@ -14,7 +14,7 @@ import {
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { addDays, addWeeks, addMonths, parseISO, format } from 'date-fns';
+import { addDays, addWeeks, addMonths, parseISO, format, isBefore, startOfDay } from 'date-fns';
 
 export function useTasks() {
   const { user, isUserLoading } = useUser();
@@ -26,7 +26,17 @@ export function useTasks() {
   const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
   const [viewMode, setViewMode] = useState<'list' | 'board' | 'diary'>('list');
 
-  // Automatically sign in anonymously if not logged in (to enable basic firestore usage)
+  // Client-side dates to avoid hydration mismatch
+  const [todayStr, setTodayStr] = useState<string>('');
+  const [tomorrowStr, setTomorrowStr] = useState<string>('');
+
+  useEffect(() => {
+    const today = new Date();
+    setTodayStr(format(today, 'yyyy-MM-dd'));
+    setTomorrowStr(format(addDays(today, 1), 'yyyy-MM-dd'));
+  }, []);
+
+  // Automatically sign in anonymously if not logged in
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
@@ -42,6 +52,36 @@ export function useTasks() {
   const { data: firestoreTasks, isLoading: isTasksLoading } = useCollection<Task>(tasksQuery);
 
   const tasks = firestoreTasks || [];
+
+  /**
+   * Automatic Tab Synchronization
+   * This effect ensures that the 'tab' field in Firestore stays in sync with the 'dueDate'.
+   * - If a task is due today (or overdue), it moves to 'Today'.
+   * - If a task is due tomorrow, it moves to 'Tomorrow'.
+   * - If a task is due after tomorrow, it moves to 'Next Week'.
+   */
+  useEffect(() => {
+    if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
+
+    tasks.forEach(task => {
+      let correctTab: TaskTab = 'Next Week';
+      
+      if (task.dueDate === todayStr || task.dueDate < todayStr) {
+        correctTab = 'Today';
+      } else if (task.dueDate === tomorrowStr) {
+        correctTab = 'Tomorrow';
+      }
+
+      // Only update if there's a discrepancy to avoid infinite loops
+      if (task.tab !== correctTab) {
+        const taskRef = doc(db, 'users', user.uid, 'tasks', task.id);
+        updateDocumentNonBlocking(taskRef, { 
+          tab: correctTab, 
+          updatedAt: new Date().toISOString() 
+        });
+      }
+    });
+  }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
   const filteredAndSortedTasks = useMemo(() => {
     return tasks
@@ -64,21 +104,29 @@ export function useTasks() {
   }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode]);
 
   const addTask = () => {
-    if (!db || !user || !tasksQuery) return;
+    if (!db || !user || !tasksQuery || !todayStr) return;
     
-    const now = new Date().toISOString();
+    const now = new Date();
+    let defaultDueDate = todayStr;
+
+    if (activeTab === 'Tomorrow') {
+      defaultDueDate = tomorrowStr;
+    } else if (activeTab === 'Next Week') {
+      defaultDueDate = format(addDays(now, 2), 'yyyy-MM-dd');
+    }
+    
     const newTaskData = {
       name: 'New Task',
       status: 'Incomplete' as TaskStatus,
       priority: 'Medium' as any,
-      dueDate: now.split('T')[0],
+      dueDate: defaultDueDate,
       notes: '',
       tab: activeTab,
       owner: activeUser,
       recurrence: 'None' as TaskRecurrence,
-      createdAt: now,
-      updatedAt: now,
-      userId: user.uid // Denormalized for security rules as per backend.json
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      userId: user.uid 
     };
     
     addDocumentNonBlocking(tasksQuery, newTaskData);
@@ -107,7 +155,6 @@ export function useTasks() {
 
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
     
-    // If moving to completed and is recurring, create a new task for the next instance
     if (newStatus === 'Completed' && task.recurrence && task.recurrence !== 'None') {
       let nextDate: Date;
       const currentDueDate = parseISO(task.dueDate);
@@ -136,7 +183,6 @@ export function useTasks() {
         createdAt: now,
         updatedAt: now,
       };
-      // remove the id so it gets a new one
       const { id: _, ...dataForNewTask } = nextTaskData;
       
       addDocumentNonBlocking(tasksQuery, dataForNewTask);
@@ -151,7 +197,7 @@ export function useTasks() {
   return {
     tasks,
     filteredTasks: filteredAndSortedTasks,
-    isLoaded: !isUserLoading && !isTasksLoading,
+    isLoaded: !isUserLoading && !isTasksLoading && todayStr !== '',
     searchQuery,
     setSearchQuery,
     statusFilter,
