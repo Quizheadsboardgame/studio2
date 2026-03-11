@@ -14,7 +14,7 @@ import {
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { addDays, addWeeks, addMonths, parseISO, format, isBefore, startOfDay } from 'date-fns';
+import { addDays, addWeeks, addMonths, parseISO, format, isBefore, startOfDay, isSameDay, getDay } from 'date-fns';
 
 export function useTasks() {
   const { user, isUserLoading } = useUser();
@@ -55,10 +55,6 @@ export function useTasks() {
 
   /**
    * Automatic Tab Synchronization
-   * This effect ensures that the 'tab' field in Firestore stays in sync with the 'dueDate'.
-   * - If a task is due today (or overdue), it moves to 'Today'.
-   * - If a task is due tomorrow, it moves to 'Tomorrow'.
-   * - If a task is due after tomorrow, it moves to 'Next Week'.
    */
   useEffect(() => {
     if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
@@ -72,7 +68,6 @@ export function useTasks() {
         correctTab = 'Tomorrow';
       }
 
-      // Only update if there's a discrepancy to avoid infinite loops
       if (task.tab !== correctTab) {
         const taskRef = doc(db, 'users', user.uid, 'tasks', task.id);
         updateDocumentNonBlocking(taskRef, { 
@@ -90,8 +85,22 @@ export function useTasks() {
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         
-        // In diary view, we show tasks for the whole week, so we skip the tab filter
-        const matchesTab = viewMode === 'diary' ? true : task.tab === activeTab;
+        // Tab Filtering logic
+        // Non-recurring: exact tab match
+        // Recurring: If Daily or Weekday, they appear in all future-relevant tabs
+        const isRecurringTodayPlus = task.recurrence !== 'None';
+        let matchesTab = task.tab === activeTab;
+        
+        if (isRecurringTodayPlus && viewMode !== 'diary') {
+           // If it's a recurring task, we show it in its "next" tab, 
+           // and if it's Daily/Weekday, it's effectively "due" in every tab 
+           // after its start date.
+           if (activeTab === 'Today' && (task.dueDate <= todayStr)) matchesTab = true;
+           if (activeTab === 'Tomorrow' && (task.dueDate <= tomorrowStr)) matchesTab = true;
+           if (activeTab === 'Next Week') matchesTab = true;
+        }
+
+        if (viewMode === 'diary') matchesTab = true;
         
         const matchesUser = task.owner === activeUser;
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
@@ -101,7 +110,7 @@ export function useTasks() {
         if (priorityDiff !== 0) return priorityDiff;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
-  }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode]);
+  }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, tomorrowStr]);
 
   const addTask = () => {
     if (!db || !user || !tasksQuery || !todayStr) return;
@@ -162,6 +171,14 @@ export function useTasks() {
       switch (task.recurrence) {
         case 'Daily':
           nextDate = addDays(currentDueDate, 1);
+          break;
+        case 'Monday to Friday':
+          const day = getDay(currentDueDate);
+          // 5 is Friday, so next is Monday (add 3)
+          // 6 is Saturday, so next is Monday (add 2)
+          if (day === 5) nextDate = addDays(currentDueDate, 3);
+          else if (day === 6) nextDate = addDays(currentDueDate, 2);
+          else nextDate = addDays(currentDueDate, 1);
           break;
         case 'Weekly':
           nextDate = addWeeks(currentDueDate, 1);
