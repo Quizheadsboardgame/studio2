@@ -19,6 +19,12 @@ interface TaskCardProps {
   isBoard?: boolean;
 }
 
+const USER_THEMES = {
+  'Owen': 'text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400',
+  'Lucy': 'text-pink-600 bg-pink-50 border-pink-100 dark:bg-pink-900/20 dark:border-pink-800 dark:text-pink-400',
+  'Nick': 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
+};
+
 export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, isBoard }: TaskCardProps) {
   const [todayStr, setTodayStr] = React.useState<string | null>(null);
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
@@ -107,6 +113,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
   }, [task.dueDate]);
 
   const showCreator = task.createdBy && task.createdBy !== task.owner;
+  const creatorTheme = showCreator ? USER_THEMES[task.createdBy as keyof typeof USER_THEMES] : '';
 
   return (
     <div className="relative overflow-hidden rounded-lg group">
@@ -177,9 +184,12 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                   )}
                 </div>
                 {showCreator && (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <UserPen className="h-3 w-3 text-slate-400" />
-                    <span className="text-[10px] font-medium text-slate-400">Created by {task.createdBy}</span>
+                  <div className={cn(
+                    "flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full border w-fit",
+                    creatorTheme
+                  )}>
+                    <UserPen className="h-2.5 w-2.5" />
+                    <span className="text-[9px] font-bold">Created by {task.createdBy}</span>
                   </div>
                 )}
                 {task.notes && (

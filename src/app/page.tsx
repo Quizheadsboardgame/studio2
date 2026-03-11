@@ -147,13 +147,18 @@ export default function Home() {
         <div className="flex flex-col items-center mb-8">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-md">
             <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
-              {USER_OPTIONS.map((user) => (
+              {USER_OPTIONS.map((userName) => (
                 <TabsTrigger 
-                  key={user} 
-                  value={user}
-                  className="rounded-xl font-bold data-[state=active]:bg-slate-900 data-[state=active]:text-white dark:data-[state=active]:bg-slate-50 dark:data-[state=active]:text-slate-900"
+                  key={userName} 
+                  value={userName}
+                  className={cn(
+                    "rounded-xl font-bold transition-all data-[state=active]:text-white",
+                    userName === 'Owen' && "data-[state=active]:bg-blue-600",
+                    userName === 'Lucy' && "data-[state=active]:bg-pink-500",
+                    userName === 'Nick' && "data-[state=active]:bg-emerald-500"
+                  )}
                 >
-                  {user}
+                  {userName}
                 </TabsTrigger>
               ))}
             </TabsList>

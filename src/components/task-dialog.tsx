@@ -18,6 +18,12 @@ interface TaskDialogProps {
   onSave: (task: Task) => void;
 }
 
+const USER_THEMES = {
+  'Owen': 'text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400',
+  'Lucy': 'text-pink-600 bg-pink-50 border-pink-100 dark:bg-pink-900/20 dark:border-pink-800 dark:text-pink-400',
+  'Nick': 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
+};
+
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
   const [formData, setFormData] = React.useState<Task | null>(null);
 
@@ -37,6 +43,9 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
   };
 
   const isCompleted = formData.status === 'Completed';
+  const creatorTheme = formData.createdBy && formData.createdBy !== formData.owner 
+    ? USER_THEMES[formData.createdBy as keyof typeof USER_THEMES] 
+    : '';
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -53,7 +62,10 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
             <div className="flex items-center justify-between">
               <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Task Name</Label>
               {formData.createdBy && formData.createdBy !== formData.owner && (
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded-full border">
+                <div className={cn(
+                  "flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                  creatorTheme
+                )}>
                   <UserPen className="h-3 w-3" />
                   Created by {formData.createdBy}
                 </div>
