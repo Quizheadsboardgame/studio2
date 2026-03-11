@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -9,6 +8,7 @@ import { AuthDialog } from "@/components/auth-dialog";
 import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { TaskDiaryView } from "@/components/task-diary-view";
+import { UserStats } from "@/components/user-stats";
 import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ export default function Home() {
   const { user } = useUser();
   const auth = useAuth();
   const {
+    tasks,
     filteredTasks,
     isLoaded,
     searchQuery,
@@ -126,6 +127,9 @@ export default function Home() {
             </Button>
           </div>
         </header>
+
+        {/* User Stats & Leaderboard */}
+        <UserStats tasks={tasks} activeUser={activeUser} />
 
         {/* Primary User Tabs */}
         <div className="flex flex-col items-center mb-8">
