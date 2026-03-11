@@ -148,10 +148,11 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
         className={cn(
           "relative group transition-all hover:shadow-md cursor-pointer border-2 z-10 bg-card",
           isBoard && "cursor-grab active:cursor-grabbing",
-          task.status === 'Completed' ? "opacity-75" : "opacity-100",
-          isHighPriorityDueToday 
-            ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
-            : "border-transparent"
+          task.status === 'Completed' 
+            ? "border-green-200 bg-green-50/50 dark:bg-green-950/10 opacity-75" 
+            : isHighPriorityDueToday 
+              ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
+              : "border-transparent"
         )}
       >
         <CardContent className="p-3">

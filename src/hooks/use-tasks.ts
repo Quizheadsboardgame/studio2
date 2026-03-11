@@ -101,8 +101,16 @@ export function useTasks() {
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
+        // Primary Sort: Completed tasks to bottom
+        const aStatus = a.status === 'Completed' ? 1 : 0;
+        const bStatus = b.status === 'Completed' ? 1 : 0;
+        if (aStatus !== bStatus) return aStatus - bStatus;
+
+        // Secondary Sort: Priority
         const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
         if (priorityDiff !== 0) return priorityDiff;
+
+        // Tertiary Sort: Date
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
   }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, tomorrowStr]);
