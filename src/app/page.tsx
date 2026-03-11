@@ -8,6 +8,7 @@ import { TaskDialog } from "@/components/task-dialog";
 import { AuthDialog } from "@/components/auth-dialog";
 import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
+import { TaskDiaryView } from "@/components/task-diary-view";
 import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
   Search, 
   LayoutList, 
   LayoutGrid, 
+  CalendarRange,
   Moon, 
   Sun, 
   Filter,
@@ -146,24 +148,61 @@ export default function Home() {
         <div className="space-y-6">
           
           {/* Time Tabs */}
-          <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
-            {TAB_OPTIONS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
+              {TAB_OPTIONS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  disabled={viewMode === 'diary'}
+                  className={cn(
+                    "px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
+                    activeTab === tab && viewMode !== 'diary'
+                      ? "bg-blue-600 text-white shadow-md scale-105" 
+                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700",
+                    viewMode === 'diary' && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border dark:border-slate-700 flex items-center">
+              <button 
+                onClick={() => setViewMode('list')}
                 className={cn(
-                  "px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
-                  activeTab === tab 
-                    ? "bg-blue-600 text-white shadow-md scale-105" 
-                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  "p-2 rounded-lg transition-all",
+                  viewMode === 'list' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
+                title="List View"
               >
-                {tab}
+                <LayoutList className="h-5 w-5" />
               </button>
-            ))}
+              <button 
+                onClick={() => setViewMode('board')}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  viewMode === 'board' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                )}
+                title="Board View"
+              >
+                <LayoutGrid className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={() => setViewMode('diary')}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  viewMode === 'diary' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                )}
+                title="Diary View"
+              >
+                <CalendarRange className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Filters and View Toggles */}
+          {/* Filters */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex flex-1 flex-col md:flex-row items-center gap-3 w-full lg:max-w-2xl">
               <div className="relative w-full">
@@ -194,29 +233,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border dark:border-slate-700 flex items-center">
-              <button 
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  "p-2 rounded-lg transition-all",
-                  viewMode === 'list' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-                title="List View"
-              >
-                <LayoutList className="h-5 w-5" />
-              </button>
-              <button 
-                onClick={() => setViewMode('board')}
-                className={cn(
-                  "p-2 rounded-lg transition-all",
-                  viewMode === 'board' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-                title="Board View"
-              >
-                <LayoutGrid className="h-5 w-5" />
-              </button>
-            </div>
           </div>
 
           {/* Main Content Area */}
@@ -228,8 +244,15 @@ export default function Home() {
                 onDelete={deleteTask}
                 onStatusChange={moveTaskStatus}
               />
-            ) : (
+            ) : viewMode === 'board' ? (
               <TaskBoardView 
+                tasks={filteredTasks} 
+                onEdit={setEditingTask} 
+                onDelete={deleteTask}
+                onStatusChange={moveTaskStatus}
+              />
+            ) : (
+              <TaskDiaryView 
                 tasks={filteredTasks} 
                 onEdit={setEditingTask} 
                 onDelete={deleteTask}

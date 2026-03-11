@@ -24,7 +24,7 @@ export function useTasks() {
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [activeTab, setActiveTab] = useState<TaskTab>('Today');
   const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
-  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'board' | 'diary'>('list');
 
   // Automatically sign in anonymously if not logged in (to enable basic firestore usage)
   useEffect(() => {
@@ -49,7 +49,10 @@ export function useTasks() {
         const matchesSearch = task.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
-        const matchesTab = task.tab === activeTab;
+        
+        // In diary view, we show tasks for the whole week, so we skip the tab filter
+        const matchesTab = viewMode === 'diary' ? true : task.tab === activeTab;
+        
         const matchesUser = task.owner === activeUser;
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
@@ -58,7 +61,7 @@ export function useTasks() {
         if (priorityDiff !== 0) return priorityDiff;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
-  }, [tasks, searchQuery, statusFilter, activeTab, activeUser]);
+  }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode]);
 
   const addTask = () => {
     if (!db || !user || !tasksQuery) return;
