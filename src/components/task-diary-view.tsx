@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -36,22 +35,27 @@ interface TaskDiaryViewProps {
 
 export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveDate }: TaskDiaryViewProps) {
   const [viewType, setViewType] = React.useState<'week' | 'month'>('week');
-  const [baseDate, setBaseDate] = React.useState<Date>(new Date());
+  const [baseDate, setBaseDate] = React.useState<Date | null>(null);
   const [days, setDays] = React.useState<Date[]>([]);
 
+  // Defer initialization of current date until after hydration
   React.useEffect(() => {
+    setBaseDate(new Date());
+  }, []);
+
+  React.useEffect(() => {
+    if (!baseDate) return;
+
     const start = startOfDay(baseDate);
     let intervalDays: Date[] = [];
 
     if (viewType === 'week') {
-      // 7 days starting from baseDate
       intervalDays = Array.from({ length: 7 }, (_, i) => addDays(start, i));
     } else {
-      // Full month grid (including padding from prev/next months)
       const monthStart = startOfMonth(start);
       const monthEnd = endOfMonth(start);
-      const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday
-      const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 }); // Monday
+      const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+      const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
       
       intervalDays = eachDayOfInterval({
         start: calendarStart,
@@ -62,23 +66,18 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
   }, [baseDate, viewType]);
 
   const navigate = (direction: 'prev' | 'next') => {
+    if (!baseDate) return;
     if (viewType === 'week') {
-      setBaseDate(prev => direction === 'next' ? addDays(prev, 7) : subDays(prev, 7));
+      setBaseDate(prev => direction === 'next' ? addDays(prev!, 7) : subDays(prev!, 7));
     } else {
-      setBaseDate(prev => direction === 'next' ? addMonths(prev, 1) : subMonths(prev, 1));
+      setBaseDate(prev => direction === 'next' ? addMonths(prev!, 1) : subMonths(prev!, 1));
     }
   };
 
   const isTaskScheduledForDay = (task: Task, day: Date) => {
     const taskDueDate = parseISO(task.dueDate);
-    
-    // Exact match
     if (isSameDay(taskDueDate, day)) return true;
-
-    // Recurring logic
     if (task.recurrence === 'None') return false;
-    
-    // Only show if the task started on or before this day
     if (taskDueDate > day) return false;
 
     const dayOfWeek = getDay(day);
@@ -96,11 +95,11 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
     }
   };
 
-  if (days.length === 0) return null;
+  // Prevent rendering before the current date is determined to avoid hydration mismatch
+  if (!baseDate || days.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-10">
-      {/* Diary Controls */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700 shadow-sm">
         <div className="flex items-center gap-4">
           <Tabs value={viewType} onValueChange={(v) => setViewType(v as any)} className="w-auto">
@@ -140,12 +139,10 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
         </Button>
       </div>
 
-      {/* Schedule Grid */}
       <div className={cn(
         "grid gap-4",
         viewType === 'week' ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-7" : "grid-cols-7"
       )}>
-        {/* Month Header - Days of Week */}
         {viewType === 'month' && ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
           <div key={day} className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 py-2">
             {day}
@@ -204,7 +201,7 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
                           onDelete={onDelete} 
                           onStatusChange={onStatusChange}
                           onMoveDate={onMoveDate}
-                          isBoard={viewType === 'month'} // Compact mode for month view
+                          isBoard={viewType === 'month'}
                         />
                       </div>
                     </div>
