@@ -107,8 +107,8 @@ export function useTasks() {
       });
   }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, tomorrowStr]);
 
-  const addTask = () => {
-    if (!db || !user || !tasksQuery || !todayStr) return;
+  const getNewTaskTemplate = (): Task | null => {
+    if (!todayStr || !user) return null;
     
     const now = new Date();
     let defaultDueDate = todayStr;
@@ -119,31 +119,37 @@ export function useTasks() {
       defaultDueDate = format(addDays(now, 2), 'yyyy-MM-dd');
     }
     
-    const newTaskData = {
-      name: 'New Task',
+    return {
+      id: 'new',
+      name: '',
       status: 'Incomplete' as TaskStatus,
       priority: 'Medium' as any,
       dueDate: defaultDueDate,
       notes: '',
       tab: activeTab,
       owner: activeUser,
-      createdBy: activeUser, // Track who is creating the task
+      createdBy: activeUser,
       recurrence: 'None' as TaskRecurrence,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
       userId: user.uid 
     };
-    
-    addDocumentNonBlocking(tasksQuery, newTaskData);
   };
 
   const updateTask = (updatedTask: Task) => {
-    if (!db || !user) return;
-    const taskRef = doc(db, 'users', user.uid, 'tasks', updatedTask.id);
-    updateDocumentNonBlocking(taskRef, { 
-      ...updatedTask, 
-      updatedAt: new Date().toISOString() 
-    });
+    if (!db || !user || !tasksQuery) return;
+    const now = new Date().toISOString();
+
+    if (updatedTask.id === 'new') {
+      const { id, ...newTaskData } = { ...updatedTask, updatedAt: now };
+      addDocumentNonBlocking(tasksQuery, newTaskData);
+    } else {
+      const taskRef = doc(db, 'users', user.uid, 'tasks', updatedTask.id);
+      updateDocumentNonBlocking(taskRef, { 
+        ...updatedTask, 
+        updatedAt: now 
+      });
+    }
   };
 
   const deleteTask = (id: string) => {
@@ -244,7 +250,7 @@ export function useTasks() {
     setActiveUser,
     viewMode,
     setViewMode,
-    addTask,
+    getNewTaskTemplate,
     updateTask,
     deleteTask,
     moveTaskStatus,

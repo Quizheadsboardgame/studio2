@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -50,7 +49,7 @@ export default function Home() {
     setActiveUser,
     viewMode,
     setViewMode,
-    addTask,
+    getNewTaskTemplate,
     updateTask,
     deleteTask,
     moveTaskStatus,
@@ -69,6 +68,13 @@ export default function Home() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  const handleCreateNewTask = () => {
+    const template = getNewTaskTemplate();
+    if (template) {
+      setEditingTask(template);
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -122,7 +128,7 @@ export default function Home() {
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <Button 
-              onClick={addTask}
+              onClick={handleCreateNewTask}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-6 shadow-lg shadow-blue-600/20"
             >
               <Plus className="h-5 w-5 mr-1" /> New Task
