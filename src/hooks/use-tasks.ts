@@ -55,6 +55,7 @@ export function useTasks() {
 
   /**
    * Automatic Tab Synchronization
+   * Ensures the 'tab' property matches the 'dueDate' in reality.
    */
   useEffect(() => {
     if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
@@ -85,16 +86,8 @@ export function useTasks() {
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         
-        // Tab Filtering logic
-        const isRecurringTodayPlus = task.recurrence !== 'None';
+        // Tab Filtering logic - Relying on the sync effect is cleaner and avoids duplicates
         let matchesTab = task.tab === activeTab;
-        
-        if (isRecurringTodayPlus && viewMode !== 'diary') {
-           if (activeTab === 'Today' && (task.dueDate <= todayStr)) matchesTab = true;
-           if (activeTab === 'Tomorrow' && (task.dueDate <= tomorrowStr)) matchesTab = true;
-           if (activeTab === 'Next Week') matchesTab = true;
-        }
-
         if (viewMode === 'diary') matchesTab = true;
         
         const matchesUser = task.owner === activeUser;
@@ -174,6 +167,7 @@ export function useTasks() {
 
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
     
+    // Recurrence logic: If completed, spawn the next instance
     if (newStatus === 'Completed' && task.recurrence && task.recurrence !== 'None') {
       let nextDate: Date;
       const currentDueDate = parseISO(task.dueDate);

@@ -76,7 +76,16 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
 
   const isTaskScheduledForDay = (task: Task, day: Date) => {
     const taskDueDate = parseISO(task.dueDate);
+    
+    // Always show if it's the actual due date
     if (isSameDay(taskDueDate, day)) return true;
+    
+    // CRITICAL: If the task is completed, DO NOT project it into future days.
+    // The system creates a NEW document for the next occurrence, so projecting
+    // a completed one would cause a duplicate on the calendar.
+    if (task.status === 'Completed') return false;
+    
+    // If not completed and recurring, project it forward
     if (task.recurrence === 'None') return false;
     if (taskDueDate > day) return false;
 
