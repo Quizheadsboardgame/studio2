@@ -47,6 +47,15 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
     e.dataTransfer.setData("taskId", task.id);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent triggering edit when clicking action buttons
+    onEdit(task);
+  };
+
+  const handleActionClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+  };
+
   // Format date to UK format (DD/MM/YYYY)
   const formattedDate = React.useMemo(() => {
     try {
@@ -60,8 +69,10 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
     <Card 
       draggable={isBoard}
       onDragStart={handleDragStart}
+      onClick={handleCardClick}
       className={cn(
-        "group transition-all hover:shadow-md cursor-grab active:cursor-grabbing border-2",
+        "group transition-all hover:shadow-md cursor-pointer border-2",
+        isBoard && "cursor-grab active:cursor-grabbing",
         task.status === 'Completed' ? "opacity-75" : "opacity-100",
         isHighPriorityDueToday 
           ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
@@ -93,24 +104,26 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
             </div>
           </div>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(task)}>
-                <Edit2 className="h-4 w-4 mr-2" /> Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onDelete(task.id)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div onClick={handleActionClick}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(task)}>
+                  <Edit2 className="h-4 w-4 mr-2" /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onDelete(task.id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <div className="flex items-center justify-between mt-3 gap-2">
@@ -128,7 +141,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isBoard }: Ta
           </div>
           
           {!isBoard && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" onClick={handleActionClick}>
               <Button 
                 variant="ghost" 
                 size="icon" 
