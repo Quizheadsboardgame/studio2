@@ -14,6 +14,7 @@ export interface Task {
   notes?: string;
   tab: TaskTab;
   owner: TaskUser;
+  createdBy: TaskUser;
   recurrence: TaskRecurrence;
   createdAt: string;
   updatedAt: string;

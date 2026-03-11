@@ -84,10 +84,14 @@
           "type": "string",
           "description": "The person this task is assigned to."
         },
+        "createdBy": {
+          "type": "string",
+          "description": "The person who created this task."
+        },
         "recurrence": {
           "type": "string",
           "description": "The recurrence pattern for the task.",
-          "enum": ["None", "Daily", "Weekly", "Monthly"]
+          "enum": ["None", "Daily", "Weekly", "Monthly", "Monday to Friday"]
         },
         "createdAt": {
           "type": "string",
@@ -108,6 +112,7 @@
         "priority",
         "tab",
         "owner",
+        "createdBy",
         "createdAt",
         "updatedAt"
       ]

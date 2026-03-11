@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -128,6 +127,7 @@ export function useTasks() {
       notes: '',
       tab: activeTab,
       owner: activeUser,
+      createdBy: activeUser, // Track who is creating the task
       recurrence: 'None' as TaskRecurrence,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),

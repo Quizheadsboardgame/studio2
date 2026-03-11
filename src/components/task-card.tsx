@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -6,7 +5,7 @@ import { Task } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check, CalendarPlus } from "lucide-react";
+import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check, CalendarPlus, UserPen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
@@ -105,6 +104,8 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
     }
   }, [task.dueDate]);
 
+  const showCreator = task.createdBy && task.createdBy !== task.owner;
+
   return (
     <div className="relative overflow-hidden rounded-lg group">
       {/* Swipe Left Background (Complete) */}
@@ -170,6 +171,12 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                     <Repeat className="h-3 w-3 text-blue-500" title={`Recurring: ${task.recurrence}`} />
                   )}
                 </div>
+                {showCreator && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <UserPen className="h-3 w-3 text-slate-400" />
+                    <span className="text-[10px] font-medium text-slate-400">Created by {task.createdBy}</span>
+                  </div>
+                )}
                 {task.notes && (
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                     {task.notes}

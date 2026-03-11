@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Repeat, Clock, CheckCircle2 } from "lucide-react";
+import { Repeat, Clock, CheckCircle2, UserPen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TaskDialogProps {
@@ -50,7 +50,15 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
         
         <div className="grid gap-5 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Task Name</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Task Name</Label>
+              {formData.createdBy && formData.createdBy !== formData.owner && (
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded-full border">
+                  <UserPen className="h-3 w-3" />
+                  Created by {formData.createdBy}
+                </div>
+              )}
+            </div>
             <Input
               id="name"
               placeholder="What needs to be done?"
