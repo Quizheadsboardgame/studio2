@@ -80,8 +80,17 @@ export function useTasks() {
   }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
   const filteredAndSortedTasks = useMemo(() => {
+    // We use a Set to track "Unique Keys" for de-duplication
+    // A duplicate is defined as same name, same due date, same owner, and same status.
+    const seen = new Set<string>();
+
     return tasks
       .filter((task) => {
+        // De-duplication check
+        const duplicateKey = `${task.name.trim().toLowerCase()}-${task.dueDate}-${task.owner}-${task.status}`;
+        if (seen.has(duplicateKey)) return false;
+        seen.add(duplicateKey);
+
         const matchesSearch = task.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
@@ -195,16 +204,25 @@ export function useTasks() {
       const nextDueDateStr = format(nextDate, 'yyyy-MM-dd');
       const now = new Date().toISOString();
       
-      const nextTaskData = {
-        ...task,
-        status: 'Incomplete' as TaskStatus,
-        dueDate: nextDueDateStr,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const { id: _, ...dataForNewTask } = nextTaskData;
-      
-      addDocumentNonBlocking(tasksQuery, dataForNewTask);
+      // DE-DUPLICATION CHECK: Before adding the next instance, ensure it doesn't already exist
+      const alreadyExists = tasks.some(t => 
+        t.name.trim().toLowerCase() === task.name.trim().toLowerCase() && 
+        t.dueDate === nextDueDateStr && 
+        t.owner === task.owner &&
+        t.status !== 'Completed'
+      );
+
+      if (!alreadyExists) {
+        const nextTaskData = {
+          ...task,
+          status: 'Incomplete' as TaskStatus,
+          dueDate: nextDueDateStr,
+          createdAt: now,
+          updatedAt: now,
+        };
+        const { id: _, ...dataForNewTask } = nextTaskData;
+        addDocumentNonBlocking(tasksQuery, dataForNewTask);
+      }
     }
 
     updateDocumentNonBlocking(taskRef, { 
