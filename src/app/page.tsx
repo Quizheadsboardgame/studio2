@@ -27,11 +27,13 @@ import {
   Loader2,
   RefreshCw,
   LogOut,
-  History
+  History,
+  Flame
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from "firebase/auth";
+import { format, subDays } from "date-fns";
 
 export default function Home() {
   const { user } = useUser();
@@ -87,6 +89,31 @@ export default function Home() {
     return tasks.filter(t => t.owner === userName && t.status !== 'Completed').length;
   };
 
+  const getUserStreak = (userName: TaskUser) => {
+    let streak = 0;
+    const today = new Date();
+    
+    for (let i = 0; i < 30; i++) {
+      const checkDate = subDays(today, i);
+      const checkDateStr = format(checkDate, 'yyyy-MM-dd');
+      const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
+      
+      if (dayTasks.length === 0) {
+        if (i === 0) continue; 
+        streak++;
+        continue;
+      }
+      
+      const dayCompleted = dayTasks.filter(t => t.status === 'Completed').length;
+      if (dayCompleted === dayTasks.length) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  };
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
@@ -95,7 +122,6 @@ export default function Home() {
     );
   }
 
-  // Define background tints for different users
   const userBgTint = {
     'Owen': 'bg-blue-50/30 dark:bg-blue-900/10',
     'Lucy': 'bg-pink-50/30 dark:bg-pink-900/10',
@@ -162,10 +188,11 @@ export default function Home() {
 
         {/* Primary User Tabs */}
         <div className="flex flex-col items-center mb-8">
-          <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-md">
-            <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
+          <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-lg">
+            <TabsList className="grid w-full grid-cols-3 h-14 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
               {USER_OPTIONS.map((userName) => {
                 const count = getUserOutstandingCount(userName);
+                const streak = getUserStreak(userName);
                 const isActive = activeUser === userName;
                 
                 return (
@@ -173,13 +200,23 @@ export default function Home() {
                     key={userName} 
                     value={userName}
                     className={cn(
-                      "relative rounded-xl font-bold transition-all data-[state=active]:text-white",
+                      "relative rounded-xl font-bold transition-all data-[state=active]:text-white h-12",
                       userName === 'Owen' && "data-[state=active]:bg-blue-600",
                       userName === 'Lucy' && "data-[state=active]:bg-pink-500",
                       userName === 'Nick' && "data-[state=active]:bg-emerald-500"
                     )}
                   >
-                    <span className="relative z-10">{userName}</span>
+                    <div className="flex flex-col items-center justify-center gap-0">
+                      <span className="relative z-10">{userName}</span>
+                      {streak > 1 && (
+                        <span className={cn(
+                          "text-[9px] flex items-center gap-0.5",
+                          isActive ? "text-white" : "text-orange-500"
+                        )}>
+                          <Flame className="h-2.5 w-2.5 fill-current" /> {streak}d
+                        </span>
+                      )}
+                    </div>
                     {count > 0 && (
                       <span className={cn(
                         "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
@@ -369,3 +406,4 @@ export default function Home() {
     </div>
   );
 }
+

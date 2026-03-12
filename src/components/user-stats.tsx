@@ -1,12 +1,13 @@
+
 "use client";
 
 import * as React from "react";
 import { Task, TaskUser, USER_OPTIONS } from "@/types/task";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Flame, Target, Star } from "lucide-react";
+import { Trophy, Flame, Target, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, subDays, isSameDay, parseISO } from "date-fns";
 
 interface UserStatsProps {
   tasks: Task[];
@@ -43,13 +44,12 @@ const USER_COLORS = {
 export function UserStats({ tasks, activeUser }: UserStatsProps) {
   const [todayStr, setTodayStr] = React.useState<string>("");
 
-  // Set today's date only on the client to avoid hydration mismatch
   React.useEffect(() => {
     setTodayStr(format(new Date(), 'yyyy-MM-dd'));
   }, []);
 
   const getStats = (user: TaskUser) => {
-    if (!todayStr) return { completed: 0, total: 0, percentage: 100 };
+    if (!todayStr) return { completed: 0, total: 0, percentage: 100, streak: 0 };
     
     // Filter tasks specifically for this user and for TODAY'S date
     const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
@@ -58,7 +58,35 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     
     // If 0 tasks for today, completion is 100% (clean slate)
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
-    return { completed, total, percentage };
+
+    // Calculate Streak (Simplified calculation based on available task history)
+    let streak = 0;
+    const today = new Date();
+    
+    // Check backwards from today
+    for (let i = 0; i < 30; i++) {
+      const checkDate = subDays(today, i);
+      const checkDateStr = format(checkDate, 'yyyy-MM-dd');
+      const dayTasks = tasks.filter(t => t.owner === user && t.dueDate === checkDateStr);
+      
+      if (dayTasks.length === 0) {
+        // If no tasks on this day, we'll count it as "passed" for the streak 
+        // unless it's the very first day we check and there's nothing.
+        if (i === 0) continue; 
+        streak++;
+        continue;
+      }
+      
+      const dayCompleted = dayTasks.filter(t => t.status === 'Completed').length;
+      if (dayCompleted === dayTasks.length) {
+        streak++;
+      } else {
+        // Streak broken
+        break;
+      }
+    }
+
+    return { completed, total, percentage, streak };
   };
 
   const activeStats = getStats(activeUser);
@@ -77,11 +105,8 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     name: user,
     ...getStats(user),
   })).sort((a, b) => {
-    // If one has tasks and the other doesn't, the one with tasks stays on top
     if (a.total > 0 && b.total === 0) return -1;
     if (a.total === 0 && b.total > 0) return 1;
-    
-    // Otherwise, sort by percentage descending
     return b.percentage - a.percentage;
   });
 
@@ -96,14 +121,26 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
       )}>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <div>
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Target className={cn("h-5 w-5", activeUserTheme.text)} />
-                {activeUser}'s Daily Progress
-              </h2>
-              <p className="text-sm text-muted-foreground font-medium mt-1">
-                {encouragingWords}
-              </p>
+            <div className="flex items-start gap-4">
+              <div className={cn(
+                "h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner",
+                activeUserTheme.soft
+              )}>
+                <Flame className={cn("h-8 w-8", activeUserTheme.text, activeStats.percentage === 100 && "animate-pulse")} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  {activeUser}'s Daily Progress
+                  {activeStats.streak > 0 && (
+                    <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full dark:bg-orange-900/30 dark:text-orange-400">
+                      <Zap className="h-3 w-3 fill-current" /> {activeStats.streak} Day Streak
+                    </span>
+                  )}
+                </h2>
+                <p className="text-sm text-muted-foreground font-medium mt-1">
+                  {encouragingWords}
+                </p>
+              </div>
             </div>
             <div className="text-right">
               <span className={cn("text-3xl font-black", activeUserTheme.text)}>
@@ -120,18 +157,6 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
               className="h-4 rounded-full bg-slate-100 dark:bg-slate-800"
               indicatorClassName={activeUserTheme.bg}
             />
-            <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 flex justify-between px-1 pointer-events-none">
-              {[25, 50, 75].map((mark) => (
-                <div 
-                  key={mark} 
-                  className={cn(
-                    "h-2 w-0.5 bg-white/30 dark:bg-slate-700/30",
-                    activeStats.percentage >= mark && "bg-white/50"
-                  )} 
-                  style={{ marginLeft: `${mark}%` }} 
-                />
-              ))}
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -157,15 +182,23 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                     {index === 0 && stat.total > 0 ? <Star className="h-3 w-3" /> : index + 1}
                   </div>
                   <div>
-                    <p className={cn(
-                      "text-sm font-bold",
-                      stat.name === activeUser && "underline underline-offset-4 decoration-2",
-                      stat.name === activeUser && userTheme.text
-                    )}>
-                      {stat.name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className={cn(
+                        "text-sm font-bold",
+                        stat.name === activeUser && "underline underline-offset-4 decoration-2",
+                        stat.name === activeUser && userTheme.text
+                      )}>
+                        {stat.name}
+                      </p>
+                      {stat.streak > 1 && (
+                        <div className="flex items-center gap-0.5 text-[10px] text-orange-500 font-bold">
+                          <Flame className="h-3 w-3 fill-current" />
+                          {stat.streak}
+                        </div>
+                      )}
+                    </div>
                     <p className="text-[10px] text-muted-foreground font-semibold">
-                      {stat.total === 0 ? "0 tasks today (Clean!)" : `${stat.completed} of ${stat.total} today`}
+                      {stat.total === 0 ? "0 tasks (Clean!)" : `${stat.completed}/${stat.total} today`}
                     </p>
                   </div>
                 </div>
@@ -187,3 +220,4 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     </div>
   );
 }
+
