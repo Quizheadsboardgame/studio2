@@ -4,11 +4,12 @@ Manage your tasks with ease using this intuitive, time-based dashboard. This app
 
 ## Features
 
-- **Time-Based Tabs:** Organize tasks into Today, Tomorrow, and Next Week.
+- **Time-Based Tabs:** Organize tasks into Today, Tomorrow, and Later (any date after tomorrow).
 - **Bi-directional Swiping:** Swipe left to complete, swipe right to delay by one day.
 - **Competition Leaderboard:** Track productivity stats for Owen, Lucy, and Nick.
-- **Color-Coded Status:** Visual indicators for Incomplete (Red), In Progress (Orange), and Completed (Green).
+- **Color-Coded Status:** Visual indicators for Incomplete (Red/Priority), In Progress (Orange), and Completed (Green).
 - **Multi-User Assignments:** Assign tasks to others and see "Created by" labels.
+- **Automatic Cleanup:** Completed tasks from previous days are hidden by default but can be toggled via "Show Past Done".
 
 ## Getting Started
 
@@ -17,18 +18,18 @@ Manage your tasks with ease using this intuitive, time-based dashboard. This app
 
 ## How to Make This Live (Deployment)
 
-Follow these steps to deploy your app to a production URL using **Firebase App Hosting**:
+Follow these steps to deploy your app to a permanent production URL using **Firebase App Hosting**:
 
 1.  **Push your code to GitHub:**
     - Initialize a Git repository in this folder.
     - Create a new repository on GitHub and push your code there.
 
 2.  **Open the Firebase Console:**
-    - Go to [console.firebase.google.com](https://console.firebase.google.com/).
-    - Select your project: **studio-3132529478-62a3a**.
+    - Go directly to your project: [console.firebase.google.com/project/studio-3132529478-62a3a/overview](https://console.firebase.google.com/project/studio-3132529478-62a3a/overview).
 
 3.  **Setup App Hosting:**
-    - In the left-hand menu, navigate to **Build** -> **App Hosting**.
+    - In the left-hand menu, click **Build** (the hammer icon).
+    - Select **App Hosting** (it's at the bottom of the Build dropdown menu).
     - Click **Get Started**.
 
 4.  **Connect your Repository:**
@@ -40,7 +41,7 @@ Follow these steps to deploy your app to a production URL using **Firebase App H
     - Select your preferred region.
     - Click **Finish and Deploy**.
 
-Firebase will automatically detect that you are using Next.js, run your build script, and deploy the app to a global CDN. Once finished, you will receive a public URL (e.g., `https://your-app.web.app`) that anyone can access.
+Firebase will automatically detect that you are using Next.js, run your build script, and deploy the app to a global CDN. Once finished, you will receive a public URL that stays live 24/7.
 
 ---
 *Note: Your Firebase configuration is already initialized in `src/firebase/config.ts`. No further configuration is required for deployment.*
