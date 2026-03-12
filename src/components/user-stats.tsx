@@ -76,7 +76,14 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
   const allUserStats = USER_OPTIONS.map((user) => ({
     name: user,
     ...getStats(user),
-  })).sort((a, b) => b.percentage - a.percentage);
+  })).sort((a, b) => {
+    // If one has tasks and the other doesn't, the one with tasks stays on top
+    if (a.total > 0 && b.total === 0) return -1;
+    if (a.total === 0 && b.total > 0) return 1;
+    
+    // Otherwise, sort by percentage descending
+    return b.percentage - a.percentage;
+  });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -145,9 +152,9 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs shadow-sm transition-transform group-hover:scale-110",
-                    index === 0 ? "bg-amber-100 text-amber-600 ring-2 ring-amber-200" : "bg-slate-100 text-slate-500 dark:bg-slate-800"
+                    index === 0 && stat.total > 0 ? "bg-amber-100 text-amber-600 ring-2 ring-amber-200" : "bg-slate-100 text-slate-500 dark:bg-slate-800"
                   )}>
-                    {index === 0 ? <Star className="h-3 w-3" /> : index + 1}
+                    {index === 0 && stat.total > 0 ? <Star className="h-3 w-3" /> : index + 1}
                   </div>
                   <div>
                     <p className={cn(
@@ -168,7 +175,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                       {stat.percentage}%
                     </span>
                   </div>
-                  {index === 0 && stat.percentage > 0 && (
+                  {index === 0 && stat.percentage > 0 && stat.total > 0 && (
                     <Flame className="h-4 w-4 text-orange-500 animate-bounce" />
                   )}
                 </div>
