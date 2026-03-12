@@ -49,17 +49,21 @@ Generate a professional, friendly, and highly motivating daily briefing email fo
 Today's Date: {{{date}}}
 
 Tasks for Today:
+{{#if tasks}}
 {{#each tasks}}
 - [{{priority}} Priority] {{name}} {{#if startTime}}at {{startTime}}{{/if}}
   {{#if notes}}Notes: {{notes}}{{/if}}
 {{/each}}
+{{else}}
+You have no tasks scheduled for today!
+{{/if}}
 
 If there are no tasks, wish them a productive day of planning or a well-deserved rest.
 
 The email should include:
 1. A catchy, motivating subject line.
-2. A warm greeting that mentions their streak if possible (though you don't have the number, imply they are doing great).
-3. A clear, bulleted summary of their "Big Rocks" (High priority tasks) first.
+2. A warm greeting.
+3. A clear summary of their "Big Rocks" (High priority tasks) first.
 4. A concise list of other tasks.
 5. A motivational closing quote or sentiment.
 
@@ -73,15 +77,24 @@ const emailTasksFlow = ai.defineFlow(
     outputSchema: EmailTasksOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    
-    if (!output) {
-      throw new Error('Failed to generate email content.');
-    }
+    try {
+      const { output } = await prompt(input);
+      
+      if (!output) {
+        throw new Error('AI generated no output.');
+      }
 
-    // In a real production app, you would use a service like Resend, SendGrid, or Postmark here.
-    // console.log(`[SIMULATION] Emailing ${input.userEmail}...`);
-    
-    return output;
+      return {
+        ...output,
+        success: true
+      };
+    } catch (error: any) {
+      console.error('Email briefing generation error:', error);
+      return {
+        success: false,
+        subject: "Your Daily Briefing",
+        body: "We had a slight issue generating your AI briefing today, but don't let that stop you! Here's to a productive day."
+      };
+    }
   }
 );

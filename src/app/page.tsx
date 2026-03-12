@@ -99,6 +99,7 @@ export default function Home() {
 
     setIsEmailing(true);
     try {
+      console.log("Generating daily briefing for:", user.email);
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       const todayTasks = tasks.filter(t => t.owner === activeUser && t.dueDate === todayStr);
       
@@ -109,23 +110,31 @@ export default function Home() {
         tasks: todayTasks.map(t => ({
           name: t.name,
           priority: t.priority,
-          startTime: t.startTime,
-          notes: t.notes
+          startTime: t.startTime || '',
+          notes: t.notes || ''
         }))
       });
 
-      toast({
-        title: "Daily Agenda Generated",
-        description: `Subject: ${result.subject}. Content has been generated successfully!`,
-      });
+      if (result.success) {
+        toast({
+          title: "Daily Agenda Generated",
+          description: `Subject: ${result.subject}. The briefing is ready!`,
+        });
+      } else {
+        toast({
+          title: "Briefing issue",
+          description: "We couldn't generate the AI part, but your tasks are safe!",
+          variant: "destructive",
+        });
+      }
       
-      // Note: In a real app with an email API key, this would have actually arrived in your inbox.
-      console.log("SIMULATED EMAIL CONTENT:", result);
+      console.log("SIMULATED EMAIL CONTENT:", result.body);
 
     } catch (error) {
+      console.error("Email agenda failed:", error);
       toast({
         title: "Briefing failed",
-        description: "Could not generate your daily agenda.",
+        description: "Could not generate your daily agenda. Please check your connection.",
         variant: "destructive",
       });
     } finally {
@@ -224,7 +233,7 @@ export default function Home() {
               className="rounded-full border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               {isEmailing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
-              Email Agenda
+              {isEmailing ? "Generating..." : "Email Agenda"}
             </Button>
 
             {user?.isAnonymous === false ? (
