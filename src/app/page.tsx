@@ -27,18 +27,22 @@ import {
   RefreshCw,
   LogOut,
   History,
-  Flame
+  Flame,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from "firebase/auth";
 import { format, subDays, getDay, isBefore, parseISO } from "date-fns";
+import { generateDailyBriefing } from "@/ai/flows/email-tasks-flow";
+import { useToast } from "@/hooks/use-toast";
 
 const STREAK_START_DATE = '2026-03-11';
 
 export default function Home() {
   const { user } = useUser();
   const auth = useAuth();
+  const { toast } = useToast();
   const {
     tasks,
     filteredTasks,
@@ -65,6 +69,7 @@ export default function Home() {
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
+  const [isEmailing, setIsEmailing] = React.useState(false);
 
   // Sync dark mode class
   React.useEffect(() => {
@@ -79,6 +84,52 @@ export default function Home() {
     const template = getNewTaskTemplate();
     if (template) {
       setEditingTask(template);
+    }
+  };
+
+  const handleEmailAgenda = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in with an email to receive your agenda.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsEmailing(true);
+    try {
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const todayTasks = tasks.filter(t => t.owner === activeUser && t.dueDate === todayStr);
+      
+      const result = await generateDailyBriefing({
+        userName: activeUser,
+        userEmail: user.email,
+        date: format(new Date(), 'EEEE, MMMM do'),
+        tasks: todayTasks.map(t => ({
+          name: t.name,
+          priority: t.priority,
+          startTime: t.startTime,
+          notes: t.notes
+        }))
+      });
+
+      toast({
+        title: "Daily Agenda Generated",
+        description: `Subject: ${result.subject}. Content has been generated successfully!`,
+      });
+      
+      // Note: In a real app with an email API key, this would have actually arrived in your inbox.
+      console.log("SIMULATED EMAIL CONTENT:", result);
+
+    } catch (error) {
+      toast({
+        title: "Briefing failed",
+        description: "Could not generate your daily agenda.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEmailing(false);
     }
   };
 
@@ -97,15 +148,12 @@ export default function Home() {
     const today = new Date();
     const startDate = parseISO(STREAK_START_DATE);
     
-    // 1. Calculate historical streak (Yesterday backwards)
     let offset = 1; 
     let daysChecked = 0;
-    const MAX_LOOKBACK = 60; // Check up to 60 days back
+    const MAX_LOOKBACK = 60;
 
     while (daysChecked < MAX_LOOKBACK) {
       const checkDate = subDays(today, offset);
-      
-      // Stop if we hit the hard-coded start date
       if (isBefore(checkDate, startDate)) break;
 
       const dayOfWeek = getDay(checkDate);
@@ -114,21 +162,18 @@ export default function Home() {
       if (!isWeekend) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
-        
-        // If no tasks scheduled or all tasks completed
         const isDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed');
         
         if (isDone) {
           streak++;
         } else {
-          break; // Streak broken
+          break;
         }
       }
       offset++;
       daysChecked++;
     }
 
-    // 2. Check if Today is also complete to add to the total
     const todayStr = format(today, 'yyyy-MM-dd');
     const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
     const todayDone = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed');
@@ -172,6 +217,16 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleEmailAgenda}
+              disabled={isEmailing}
+              className="rounded-full border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              {isEmailing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
+              Email Agenda
+            </Button>
+
             {user?.isAnonymous === false ? (
               <div className="flex items-center gap-2 mr-2">
                 <div className="flex flex-col items-end hidden sm:flex">
