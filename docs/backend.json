@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -74,7 +75,11 @@
         },
         "startTime": {
           "type": "string",
-          "description": "The scheduled time for the task (24h format HH:mm)."
+          "description": "The scheduled start time for the task (24h format HH:mm)."
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The scheduled finish time for the task (24h format HH:mm)."
         },
         "tab": {
           "type": "string",

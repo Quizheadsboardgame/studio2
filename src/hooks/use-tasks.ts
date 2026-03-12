@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -131,7 +132,9 @@ export function useTasks() {
       recurrence: 'None' as TaskRecurrence,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
-      userId: user.uid 
+      userId: user.uid,
+      startTime: '',
+      endTime: ''
     };
   };
 

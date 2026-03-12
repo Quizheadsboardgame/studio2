@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -170,17 +171,18 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
             </Select>
           </div>
 
+          <div className="grid gap-2">
+            <Label htmlFor="dueDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="dueDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-              />
-            </div>
             <div className="grid gap-2">
               <Label htmlFor="startTime" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
               <Input
@@ -188,6 +190,16 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                 type="time"
                 value={formData.startTime || ""}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="endTime" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Finish Time</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={formData.endTime || ""}
+                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                 className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
               />
             </div>

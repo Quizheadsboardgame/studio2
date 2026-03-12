@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -114,6 +115,12 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
 
   const showCreator = task.createdBy && task.createdBy !== task.owner;
   const creatorTheme = showCreator ? USER_THEMES[task.createdBy as keyof typeof USER_THEMES] : '';
+
+  const timeDisplay = React.useMemo(() => {
+    if (!task.startTime) return null;
+    if (!task.endTime) return task.startTime;
+    return `${task.startTime} - ${task.endTime}`;
+  }, [task.startTime, task.endTime]);
 
   return (
     <div className="relative overflow-hidden rounded-lg group">
@@ -232,7 +239,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                 isHighPriorityDueToday && task.status !== 'In Progress' ? "text-destructive font-bold" : "text-muted-foreground"
               )}>
                 <Calendar className="w-3 h-3 mr-1" />
-                {formattedDate} {task.startTime && `at ${task.startTime}`} {isHighPriorityDueToday && "(TODAY)"}
+                {formattedDate} {timeDisplay && `at ${timeDisplay}`} {isHighPriorityDueToday && "(TODAY)"}
               </div>
             </div>
             

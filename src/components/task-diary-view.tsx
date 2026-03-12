@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -81,8 +82,6 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
     if (isSameDay(taskDueDate, day)) return true;
     
     // CRITICAL: If the task is completed, DO NOT project it into future days.
-    // The system creates a NEW document for the next occurrence, so projecting
-    // a completed one would cause a duplicate on the calendar.
     if (task.status === 'Completed') return false;
     
     // If not completed and recurring, project it forward
@@ -194,27 +193,31 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
 
               <div className="space-y-2 max-h-[250px] overflow-y-auto no-scrollbar">
                 {dayTasks.length > 0 ? (
-                  dayTasks.map((task) => (
-                    <div key={`${task.id}-${dayStr}`} className="relative">
-                      {task.startTime && (
-                        <div className="absolute -top-1.5 left-2 z-10">
-                          <span className="bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900 text-[8px] font-bold px-1 py-0.5 rounded-sm shadow-sm">
-                            {task.startTime}
-                          </span>
+                  dayTasks.map((task) => {
+                    const timeRange = task.startTime ? (task.endTime ? `${task.startTime}-${task.endTime}` : task.startTime) : null;
+                    
+                    return (
+                      <div key={`${task.id}-${dayStr}`} className="relative">
+                        {timeRange && (
+                          <div className="absolute -top-1.5 left-2 z-10">
+                            <span className="bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900 text-[8px] font-bold px-1 py-0.5 rounded-sm shadow-sm">
+                              {timeRange}
+                            </span>
+                          </div>
+                        )}
+                        <div className={cn(timeRange ? "pt-1.5" : "")}>
+                          <TaskCard 
+                            task={task} 
+                            onEdit={onEdit} 
+                            onDelete={onDelete} 
+                            onStatusChange={onStatusChange}
+                            onMoveDate={onMoveDate}
+                            isBoard={viewType === 'month'}
+                          />
                         </div>
-                      )}
-                      <div className={cn(task.startTime ? "pt-1.5" : "")}>
-                        <TaskCard 
-                          task={task} 
-                          onEdit={onEdit} 
-                          onDelete={onDelete} 
-                          onStatusChange={onStatusChange}
-                          onMoveDate={onMoveDate}
-                          isBoard={viewType === 'month'}
-                        />
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   viewType === 'week' && (
                     <div className="py-8 border-2 border-dashed border-slate-100 dark:border-slate-800/50 rounded-xl flex items-center justify-center">

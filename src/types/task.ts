@@ -1,3 +1,4 @@
+
 export type TaskStatus = 'Incomplete' | 'In Progress' | 'Needs Action' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskTab = 'Today' | 'Tomorrow' | 'Later';
@@ -11,6 +12,7 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string;
   startTime?: string; // Format: HH:mm
+  endTime?: string;   // Format: HH:mm
   notes?: string;
   tab: TaskTab;
   owner: TaskUser;
