@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -7,12 +6,14 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Flame, Target, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, subDays, getDay } from "date-fns";
+import { format, subDays, getDay, isBefore, parseISO } from "date-fns";
 
 interface UserStatsProps {
   tasks: Task[];
   activeUser: TaskUser;
 }
+
+const STREAK_START_DATE = '2026-03-11';
 
 const USER_COLORS = {
   'Owen': {
@@ -57,9 +58,10 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     const total = userTasksForToday.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
 
-    // 2. Calculate Streak (Starts from yesterday, ignores weekends)
+    // 2. Calculate Streak (Starts from yesterday, ignores weekends, stops at hard start date)
     let streak = 0;
     const today = new Date();
+    const startDate = parseISO(STREAK_START_DATE);
     
     // Check up to 60 days back starting from yesterday
     let offset = 1;
@@ -68,6 +70,10 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
 
     while (daysChecked < MAX_LOOKBACK) {
       const checkDate = subDays(today, offset);
+      
+      // Stop if we hit the hard-coded start date
+      if (isBefore(checkDate, startDate)) break;
+
       const dayOfWeek = getDay(checkDate);
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 

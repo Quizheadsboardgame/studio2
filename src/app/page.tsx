@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -33,7 +32,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from "firebase/auth";
-import { format, subDays, getDay } from "date-fns";
+import { format, subDays, getDay, isBefore, parseISO } from "date-fns";
+
+const STREAK_START_DATE = '2026-03-11';
 
 export default function Home() {
   const { user } = useUser();
@@ -94,6 +95,7 @@ export default function Home() {
     
     let streak = 0;
     const today = new Date();
+    const startDate = parseISO(STREAK_START_DATE);
     
     // 1. Calculate historical streak (Yesterday backwards)
     let offset = 1; 
@@ -102,6 +104,10 @@ export default function Home() {
 
     while (daysChecked < MAX_LOOKBACK) {
       const checkDate = subDays(today, offset);
+      
+      // Stop if we hit the hard-coded start date
+      if (isBefore(checkDate, startDate)) break;
+
       const dayOfWeek = getDay(checkDate);
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
