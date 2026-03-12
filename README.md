@@ -1,47 +1,38 @@
 # FocusFlow - Time-Based Task Manager
 
-Manage your tasks with ease using this intuitive, time-based dashboard. This app is built with Next.js, React, Tailwind CSS, and Firebase.
+Manage your tasks with ease using this intuitive, time-based dashboard. Built for Owen, Lucy, and Nick.
 
 ## Features
 
-- **Time-Based Tabs:** Organize tasks into Today, Tomorrow, and Later (any date after tomorrow).
-- **Bi-directional Swiping:** Swipe left to complete, swipe right to delay by one day.
-- **Competition Leaderboard:** Track productivity stats for Owen, Lucy, and Nick.
-- **Color-Coded Status:** Visual indicators for Incomplete (Red/Priority), In Progress (Orange), and Completed (Green).
-- **Multi-User Assignments:** Assign tasks to others and see "Created by" labels.
-- **Automatic Cleanup:** Completed tasks from previous days are hidden by default but can be toggled via "Show Past Done".
+- **Time-Based Tabs:** Organize tasks into Today, Tomorrow, and Later.
+- **Bi-directional Swiping:** Swipe left to complete, swipe right to delay.
+- **Competition Leaderboard:** Track productivity with color-coded user themes (Owen: Blue, Lucy: Pink, Nick: Green).
+- **Auto-Cleanup:** Completed tasks from previous days are hidden by default (toggleable).
+- **Recurring Tasks:** Supports Daily, Weekly, Monthly, and Mon-Fri patterns.
 
-## Getting Started
+## How to Move This to GitHub (Manual Copy-Paste)
 
-1.  **Development:** Run `npm run dev` to start the local development server.
-2.  **Build:** Run `npm run build` to verify the production build.
+If you want to manually move this code to your own GitHub account:
 
-## How to Make This Live (Deployment)
+1.  **Create a New Repo on GitHub:** Go to [github.com/new](https://github.com/new) and create a repository named `focus-flow`.
+2.  **Create Files:** In your local editor (like VS Code) or directly on GitHub, create the file structure you see in the sidebar here.
+3.  **Copy-Paste Content:** Open each file in this project, copy the code, and paste it into your new repository.
+4.  **Key Files to Note:** 
+    - `src/firebase/config.ts`: Contains your unique database connection.
+    - `package.json`: Lists the required libraries.
+    - `src/app/page.tsx`: The main user interface.
 
-Follow these steps to deploy your app to a permanent production URL using **Firebase App Hosting**:
+## How to Make It Live (Deployment)
 
-1.  **Push your code to GitHub:**
-    - Initialize a Git repository in this folder.
-    - Create a new repository on GitHub and push your code there.
+Once your code is in GitHub:
 
-2.  **Open the Firebase Console:**
-    - Go directly to your project: [console.firebase.google.com/project/studio-3132529478-62a3a/overview](https://console.firebase.google.com/project/studio-3132529478-62a3a/overview).
+1.  Open the [Firebase Console](https://console.firebase.google.com/project/studio-3132529478-62a3a/overview).
+2.  Click **Build** -> **App Hosting** in the left menu.
+3.  Click **Get Started** and connect your GitHub account.
+4.  Select your `focus-flow` repository.
+5.  Click **Finish and Deploy**.
 
-3.  **Setup App Hosting:**
-    - In the left-hand menu, click **Build** (the hammer icon).
-    - Select **App Hosting** (it's at the bottom of the Build dropdown menu).
-    - Click **Get Started**.
-
-4.  **Connect your Repository:**
-    - Connect your GitHub account and select the repository you just created.
-    - Choose your deployment branch (usually `main`).
-
-5.  **Configure and Deploy:**
-    - Name your backend (e.g., `focus-flow-web`).
-    - Select your preferred region.
-    - Click **Finish and Deploy**.
-
-Firebase will automatically detect that you are using Next.js, run your build script, and deploy the app to a global CDN. Once finished, you will receive a public URL that stays live 24/7.
+Firebase will automatically build your site and give you a permanent public link.
 
 ---
-*Note: Your Firebase configuration is already initialized in `src/firebase/config.ts`. No further configuration is required for deployment.*
+*Note: Your Firebase configuration is already initialized for this project. No further setup is required for the database to work.*
