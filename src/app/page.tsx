@@ -94,36 +94,41 @@ export default function Home() {
     
     let streak = 0;
     const today = new Date();
-    let offset = 0;
-    let weekdaysChecked = 0;
-    const MAX_LOOKBACK = 90;
+    
+    // 1. Calculate historical streak (Yesterday backwards)
+    let offset = 1; 
+    let daysChecked = 0;
+    const MAX_LOOKBACK = 60; // Check up to 60 days back
 
-    // Look back to find consecutive completed weekdays
-    while (weekdaysChecked < 30 && offset < MAX_LOOKBACK) {
+    while (daysChecked < MAX_LOOKBACK) {
       const checkDate = subDays(today, offset);
       const dayOfWeek = getDay(checkDate);
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0=Sun, 6=Sat
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
       if (!isWeekend) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
         
-        if (dayTasks.length === 0) {
-          // If past day (offset > 0) and no tasks scheduled, it's a pass that maintains the streak
-          if (offset > 0) streak++;
+        // If no tasks scheduled or all tasks completed
+        const isDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed');
+        
+        if (isDone) {
+          streak++;
         } else {
-          const allComplete = dayTasks.every(t => t.status === 'Completed');
-          if (allComplete) {
-            streak++;
-          } else {
-            // If it's today and not complete, we don't increment but we keep looking back
-            // If it's a past day and incomplete, the streak is broken
-            if (offset > 0) break;
-          }
+          break; // Streak broken
         }
-        weekdaysChecked++;
       }
       offset++;
+      daysChecked++;
+    }
+
+    // 2. Check if Today is also complete to add to the total
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
+    const todayDone = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed');
+    
+    if (todayDone) {
+      streak++;
     }
 
     return streak;
