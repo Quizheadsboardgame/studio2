@@ -25,6 +25,7 @@ export function useTasks() {
   const [activeTab, setActiveTab] = useState<TaskTab>('Today');
   const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
   const [viewMode, setViewMode] = useState<'list' | 'board' | 'diary'>('list');
+  const [showPastCompleted, setShowPastCompleted] = useState(false);
 
   // Client-side dates to avoid hydration mismatch
   const [todayStr, setTodayStr] = useState<string>('');
@@ -81,8 +82,6 @@ export function useTasks() {
   }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
   const filteredAndSortedTasks = useMemo(() => {
-    // We use a Set to track "Unique Keys" for de-duplication
-    // A duplicate is defined as same name, same due date, same owner, and same status.
     const seen = new Set<string>();
 
     return tasks
@@ -91,6 +90,10 @@ export function useTasks() {
         const duplicateKey = `${task.name.trim().toLowerCase()}-${task.dueDate}-${task.owner}-${task.status}`;
         if (seen.has(duplicateKey)) return false;
         seen.add(duplicateKey);
+
+        // Past Completed Filter: Hide completed tasks from before today unless toggled on
+        const isPastCompleted = task.status === 'Completed' && task.dueDate < todayStr;
+        if (!showPastCompleted && isPastCompleted) return false;
 
         const matchesSearch = task.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -116,7 +119,7 @@ export function useTasks() {
         // Tertiary Sort: Date
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
-  }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, tomorrowStr]);
+  }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, tomorrowStr, showPastCompleted]);
 
   const getNewTaskTemplate = (): Task | null => {
     if (!todayStr || !user) return null;
@@ -275,6 +278,8 @@ export function useTasks() {
     updateTask,
     deleteTask,
     moveTaskStatus,
-    moveTaskDate
+    moveTaskDate,
+    showPastCompleted,
+    setShowPastCompleted
   };
 }

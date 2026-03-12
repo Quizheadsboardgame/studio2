@@ -26,7 +26,7 @@ import {
   Loader2,
   RefreshCw,
   LogOut,
-  User as UserIcon
+  History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -53,7 +53,9 @@ export default function Home() {
     updateTask,
     deleteTask,
     moveTaskStatus,
-    moveTaskDate
+    moveTaskDate,
+    showPastCompleted,
+    setShowPastCompleted
   } = useTasks();
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
@@ -267,7 +269,7 @@ export default function Home() {
 
           {/* Filters */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex flex-1 flex-col md:flex-row items-center gap-3 w-full lg:max-w-2xl">
+            <div className="flex flex-1 flex-col md:flex-row items-center gap-3 w-full lg:max-w-3xl">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
@@ -278,7 +280,7 @@ export default function Home() {
                 />
               </div>
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <div className="relative w-full md:min-w-[180px]">
+                <div className="relative w-full md:min-w-[160px]">
                   <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val as any)}>
                     <SelectTrigger className="h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                       <div className="flex items-center gap-2">
@@ -294,6 +296,19 @@ export default function Home() {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowPastCompleted(!showPastCompleted)}
+                  className={cn(
+                    "h-11 rounded-xl px-4 whitespace-nowrap border-slate-200 dark:border-slate-700",
+                    showPastCompleted ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600" : "bg-white dark:bg-slate-800"
+                  )}
+                  title={showPastCompleted ? "Hide past completed tasks" : "Show past completed tasks"}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  {showPastCompleted ? "Hide Past Done" : "Show Past Done"}
+                </Button>
               </div>
             </div>
           </div>
