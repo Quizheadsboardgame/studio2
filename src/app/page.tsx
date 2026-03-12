@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -94,8 +95,18 @@ export default function Home() {
     );
   }
 
+  // Define background tints for different users
+  const userBgTint = {
+    'Owen': 'bg-blue-50/30 dark:bg-blue-900/10',
+    'Lucy': 'bg-pink-50/30 dark:bg-pink-900/10',
+    'Nick': 'bg-emerald-50/30 dark:bg-emerald-900/10'
+  }[activeUser];
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 font-body">
+    <div className={cn(
+      "min-h-screen transition-colors duration-500 font-body",
+      userBgTint || "bg-slate-50 dark:bg-slate-900"
+    )}>
       <div className="max-w-7xl mx-auto px-4 py-8">
         
         {/* Header */}

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Task, TaskStatus, TaskTab, TaskUser, TaskRecurrence, PRIORITY_ORDER } from '@/types/task';
 import { 
   useUser, 
@@ -31,6 +32,9 @@ export function useTasks() {
   const [todayStr, setTodayStr] = useState<string>('');
   const [tomorrowStr, setTomorrowStr] = useState<string>('');
 
+  // Track synced task IDs to avoid infinite update loops
+  const syncRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const today = new Date();
     setTodayStr(format(today, 'yyyy-MM-dd'));
@@ -57,12 +61,16 @@ export function useTasks() {
   /**
    * Automatic Tab Synchronization
    * Ensures the 'tab' property matches the 'dueDate' in reality.
-   * 'Later' encompasses any date after tomorrow.
+   * Optimized to run only when necessary and avoid write storms.
    */
   useEffect(() => {
     if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
 
     tasks.forEach(task => {
+      // Avoid re-syncing the same task in the same session unless it changes
+      const syncKey = `${task.id}-${task.dueDate}`;
+      if (syncRef.current.has(syncKey)) return;
+
       let correctTab: TaskTab = 'Later';
       
       if (task.dueDate === todayStr || task.dueDate < todayStr) {
@@ -72,6 +80,7 @@ export function useTasks() {
       }
 
       if (task.tab !== correctTab) {
+        syncRef.current.add(syncKey);
         const taskRef = doc(db, 'users', user.uid, 'tasks', task.id);
         updateDocumentNonBlocking(taskRef, { 
           tab: correctTab, 
@@ -86,7 +95,7 @@ export function useTasks() {
 
     return tasks
       .filter((task) => {
-        // De-duplication check
+        // De-duplication check: Ensure tasks with identical core details are only shown once
         const duplicateKey = `${task.name.trim().toLowerCase()}-${task.dueDate}-${task.owner}-${task.status}`;
         if (seen.has(duplicateKey)) return false;
         seen.add(duplicateKey);
@@ -99,7 +108,7 @@ export function useTasks() {
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         
-        // Tab Filtering logic
+        // Tab Filtering logic: In diary view we show everything, otherwise filter by active tab
         let matchesTab = task.tab === activeTab;
         if (viewMode === 'diary') matchesTab = true;
         
@@ -107,7 +116,7 @@ export function useTasks() {
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
-        // Primary Sort: Completed tasks to bottom
+        // Primary Sort: Completed tasks always fall to the bottom
         const aStatus = a.status === 'Completed' ? 1 : 0;
         const bStatus = b.status === 'Completed' ? 1 : 0;
         if (aStatus !== bStatus) return aStatus - bStatus;
@@ -208,7 +217,7 @@ export function useTasks() {
       const nextDueDateStr = format(nextDate, 'yyyy-MM-dd');
       const now = new Date().toISOString();
       
-      // DE-DUPLICATION CHECK
+      // DE-DUPLICATION CHECK: Don't create if the next instance already exists
       const alreadyExists = tasks.some(t => 
         t.name.trim().toLowerCase() === task.name.trim().toLowerCase() && 
         t.dueDate === nextDueDateStr && 
