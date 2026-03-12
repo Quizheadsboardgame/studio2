@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -16,6 +15,7 @@ import {
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { addDays, addWeeks, addMonths, parseISO, format, isBefore, startOfDay, isSameDay, getDay } from 'date-fns';
+import { parseTaskAI } from '@/ai/flows/parse-task-flow';
 
 export function useTasks() {
   const { user, isUserLoading } = useUser();
@@ -27,12 +27,11 @@ export function useTasks() {
   const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
   const [viewMode, setViewMode] = useState<'list' | 'board' | 'diary'>('list');
   const [showPastCompleted, setShowPastCompleted] = useState(false);
+  const [isAiParsing, setIsAiParsing] = useState(false);
 
-  // Client-side dates to avoid hydration mismatch
   const [todayStr, setTodayStr] = useState<string>('');
   const [tomorrowStr, setTomorrowStr] = useState<string>('');
 
-  // Track synced task IDs to avoid infinite update loops
   const syncRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -41,38 +40,28 @@ export function useTasks() {
     setTomorrowStr(format(addDays(today, 1), 'yyyy-MM-dd'));
   }, []);
 
-  // Automatically sign in anonymously if not logged in
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
   }, [user, isUserLoading, auth]);
 
-  // Sync tasks from Firestore
   const tasksQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return collection(db, 'users', user.uid, 'tasks');
   }, [db, user]);
 
   const { data: firestoreTasks, isLoading: isTasksLoading } = useCollection<Task>(tasksQuery);
-
   const tasks = firestoreTasks || [];
 
-  /**
-   * Automatic Tab Synchronization
-   * Ensures the 'tab' property matches the 'dueDate' in reality.
-   * Optimized to run only when necessary and avoid write storms.
-   */
   useEffect(() => {
     if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
 
     tasks.forEach(task => {
-      // Avoid re-syncing the same task in the same session unless it changes
       const syncKey = `${task.id}-${task.dueDate}`;
       if (syncRef.current.has(syncKey)) return;
 
       let correctTab: TaskTab = 'Later';
-      
       if (task.dueDate === todayStr || task.dueDate < todayStr) {
         correctTab = 'Today';
       } else if (task.dueDate === tomorrowStr) {
@@ -95,12 +84,10 @@ export function useTasks() {
 
     return tasks
       .filter((task) => {
-        // De-duplication check: Ensure tasks with identical core details are only shown once
         const duplicateKey = `${task.name.trim().toLowerCase()}-${task.dueDate}-${task.owner}-${task.status}`;
         if (seen.has(duplicateKey)) return false;
         seen.add(duplicateKey);
 
-        // Past Completed Filter: Hide completed tasks from before today unless toggled on
         const isPastCompleted = task.status === 'Completed' && task.dueDate < todayStr;
         if (!showPastCompleted && isPastCompleted) return false;
 
@@ -108,7 +95,6 @@ export function useTasks() {
                              (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
         
-        // Tab Filtering logic: In diary view we show everything, otherwise filter by active tab
         let matchesTab = task.tab === activeTab;
         if (viewMode === 'diary') matchesTab = true;
         
@@ -116,31 +102,23 @@ export function useTasks() {
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
-        // Primary Sort: Completed tasks always fall to the bottom
         const aStatus = a.status === 'Completed' ? 1 : 0;
         const bStatus = b.status === 'Completed' ? 1 : 0;
         if (aStatus !== bStatus) return aStatus - bStatus;
 
-        // Secondary Sort: Priority
         const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
         if (priorityDiff !== 0) return priorityDiff;
 
-        // Tertiary Sort: Date
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       });
   }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, tomorrowStr, showPastCompleted]);
 
   const getNewTaskTemplate = (): Task | null => {
     if (!todayStr || !user) return null;
-    
     const now = new Date();
     let defaultDueDate = todayStr;
-
-    if (activeTab === 'Tomorrow') {
-      defaultDueDate = tomorrowStr;
-    } else if (activeTab === 'Later') {
-      defaultDueDate = format(addDays(now, 2), 'yyyy-MM-dd');
-    }
+    if (activeTab === 'Tomorrow') defaultDueDate = tomorrowStr;
+    else if (activeTab === 'Later') defaultDueDate = format(addDays(now, 2), 'yyyy-MM-dd');
     
     return {
       id: 'new',
@@ -157,6 +135,41 @@ export function useTasks() {
       updatedAt: now.toISOString(),
       userId: user.uid 
     };
+  };
+
+  const handleAiSmartAdd = async (text: string) => {
+    if (!text.trim() || !user || !tasksQuery) return;
+    setIsAiParsing(true);
+    try {
+      const parsed = await parseTaskAI({
+        text,
+        currentDate: todayStr,
+        activeUser: activeUser
+      });
+
+      let tab: TaskTab = 'Later';
+      if (parsed.dueDate === todayStr) tab = 'Today';
+      else if (parsed.dueDate === tomorrowStr) tab = 'Tomorrow';
+
+      const now = new Date().toISOString();
+      addDocumentNonBlocking(tasksQuery, {
+        ...parsed,
+        status: 'Incomplete',
+        tab,
+        createdBy: activeUser,
+        recurrence: 'None',
+        createdAt: now,
+        updatedAt: now,
+        userId: user.uid
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("AI Smart-Add failed:", error);
+      return false;
+    } finally {
+      setIsAiParsing(false);
+    }
   };
 
   const updateTask = (updatedTask: Task) => {
@@ -183,90 +196,51 @@ export function useTasks() {
 
   const moveTaskStatus = (id: string, newStatus: TaskStatus) => {
     if (!db || !user || !tasksQuery) return;
-    
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
     
-    // Recurrence logic: If completed, spawn the next instance
     if (newStatus === 'Completed' && task.recurrence && task.recurrence !== 'None') {
       let nextDate: Date;
       const currentDueDate = parseISO(task.dueDate);
-      
       switch (task.recurrence) {
-        case 'Daily':
-          nextDate = addDays(currentDueDate, 1);
-          break;
+        case 'Daily': nextDate = addDays(currentDueDate, 1); break;
         case 'Monday to Friday':
           const day = getDay(currentDueDate);
           if (day === 5) nextDate = addDays(currentDueDate, 3);
           else if (day === 6) nextDate = addDays(currentDueDate, 2);
           else nextDate = addDays(currentDueDate, 1);
           break;
-        case 'Weekly':
-          nextDate = addWeeks(currentDueDate, 1);
-          break;
-        case 'Monthly':
-          nextDate = addMonths(currentDueDate, 1);
-          break;
-        default:
-          nextDate = currentDueDate;
+        case 'Weekly': nextDate = addWeeks(currentDueDate, 1); break;
+        case 'Monthly': nextDate = addMonths(currentDueDate, 1); break;
+        default: nextDate = currentDueDate;
       }
-
       const nextDueDateStr = format(nextDate, 'yyyy-MM-dd');
       const now = new Date().toISOString();
-      
-      // DE-DUPLICATION CHECK: Don't create if the next instance already exists
       const alreadyExists = tasks.some(t => 
         t.name.trim().toLowerCase() === task.name.trim().toLowerCase() && 
-        t.dueDate === nextDueDateStr && 
-        t.owner === task.owner &&
-        t.status !== 'Completed'
+        t.dueDate === nextDueDateStr && t.owner === task.owner && t.status !== 'Completed'
       );
-
       if (!alreadyExists) {
-        const nextTaskData = {
-          ...task,
-          status: 'Incomplete' as TaskStatus,
-          dueDate: nextDueDateStr,
-          createdAt: now,
-          updatedAt: now,
-        };
-        const { id: _, ...dataForNewTask } = nextTaskData;
+        const { id: _, ...dataForNewTask } = { ...task, status: 'Incomplete' as TaskStatus, dueDate: nextDueDateStr, createdAt: now, updatedAt: now };
         addDocumentNonBlocking(tasksQuery, dataForNewTask);
       }
     }
-
-    updateDocumentNonBlocking(taskRef, { 
-      status: newStatus, 
-      updatedAt: new Date().toISOString() 
-    });
+    updateDocumentNonBlocking(taskRef, { status: newStatus, updatedAt: new Date().toISOString() });
   };
 
   const moveTaskDate = (id: string) => {
     if (!db || !user) return;
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-
     const currentDueDate = parseISO(task.dueDate);
     const nextDate = addDays(currentDueDate, 1);
     const nextDateStr = format(nextDate, 'yyyy-MM-dd');
-
-    // Calculate new tab based on the new date
     let newTab: TaskTab = 'Later';
-    if (nextDateStr === todayStr) {
-      newTab = 'Today';
-    } else if (nextDateStr === tomorrowStr) {
-      newTab = 'Tomorrow';
-    }
-
+    if (nextDateStr === todayStr) newTab = 'Today';
+    else if (nextDateStr === tomorrowStr) newTab = 'Tomorrow';
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
-    updateDocumentNonBlocking(taskRef, { 
-      dueDate: nextDateStr,
-      tab: newTab,
-      updatedAt: new Date().toISOString() 
-    });
+    updateDocumentNonBlocking(taskRef, { dueDate: nextDateStr, tab: newTab, updatedAt: new Date().toISOString() });
   };
 
   return {
@@ -289,6 +263,8 @@ export function useTasks() {
     moveTaskStatus,
     moveTaskDate,
     showPastCompleted,
-    setShowPastCompleted
+    setShowPastCompleted,
+    handleAiSmartAdd,
+    isAiParsing
   };
 }

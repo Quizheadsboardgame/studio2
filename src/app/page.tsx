@@ -9,6 +9,7 @@ import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { TaskDiaryView } from "@/components/task-diary-view";
 import { UserStats } from "@/components/user-stats";
+import { ProductivityInsights } from "@/components/productivity-insights";
 import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab, TaskUser } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +28,9 @@ import {
   RefreshCw,
   LogOut,
   History,
-  Flame
+  Flame,
+  Sparkles,
+  Command
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,14 +62,16 @@ export default function Home() {
     moveTaskStatus,
     moveTaskDate,
     showPastCompleted,
-    setShowPastCompleted
+    setShowPastCompleted,
+    handleAiSmartAdd,
+    isAiParsing
   } = useTasks();
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
+  const [smartAddText, setSmartAddText] = React.useState("");
 
-  // Sync dark mode class
   React.useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -82,6 +87,13 @@ export default function Home() {
     }
   };
 
+  const onSmartAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!smartAddText.trim()) return;
+    const success = await handleAiSmartAdd(smartAddText);
+    if (success) setSmartAddText("");
+  };
+
   const getTabOutstandingCount = (tab: TaskTab) => {
     return tasks.filter(t => t.owner === activeUser && t.tab === tab && t.status !== 'Completed').length;
   };
@@ -92,45 +104,31 @@ export default function Home() {
 
   const getUserStreak = (userName: TaskUser) => {
     if (!isLoaded) return 0;
-    
     let streak = 0;
     const today = new Date();
     const startDate = parseISO(STREAK_START_DATE);
-    
     let offset = 1; 
     let daysChecked = 0;
     const MAX_LOOKBACK = 60;
-
     while (daysChecked < MAX_LOOKBACK) {
       const checkDate = subDays(today, offset);
       if (isBefore(checkDate, startDate)) break;
-
       const dayOfWeek = getDay(checkDate);
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
       if (!isWeekend) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
         const isDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed');
-        
-        if (isDone) {
-          streak++;
-        } else {
-          break;
-        }
+        if (isDone) streak++;
+        else break;
       }
       offset++;
       daysChecked++;
     }
-
     const todayStr = format(today, 'yyyy-MM-dd');
     const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
     const todayDone = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed');
-    
-    if (todayDone) {
-      streak++;
-    }
-
+    if (todayDone) streak++;
     return streak;
   };
 
@@ -150,7 +148,7 @@ export default function Home() {
 
   return (
     <div className={cn(
-      "min-h-screen transition-colors duration-500 font-body",
+      "min-h-screen transition-all duration-700 font-body pb-20",
       userBgTint || "bg-slate-50 dark:bg-slate-900"
     )}>
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -203,8 +201,43 @@ export default function Home() {
           </div>
         </header>
 
-        {/* User Stats & Leaderboard */}
+        {/* User Stats & Daily Podium */}
         <UserStats tasks={tasks} activeUser={activeUser} />
+
+        {/* AI Smart-Add Command Bar */}
+        <div className="max-w-3xl mx-auto mb-10">
+          <form onSubmit={onSmartAddSubmit} className="relative group">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Sparkles className={cn(
+                "h-5 w-5 transition-colors",
+                isAiParsing ? "text-blue-500 animate-pulse" : "text-slate-400 group-focus-within:text-blue-500"
+              )} />
+            </div>
+            <Input 
+              placeholder={`Quick add task... (e.g. "Fix the sink tomorrow high priority")`}
+              value={smartAddText}
+              onChange={(e) => setSmartAddText(e.target.value)}
+              disabled={isAiParsing}
+              className="pl-12 pr-24 h-14 text-base bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+            />
+            <div className="absolute right-2 top-2 bottom-2 flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-400">
+                <Command className="h-3 w-3" /> ENTER
+              </div>
+              <Button 
+                type="submit"
+                disabled={!smartAddText.trim() || isAiParsing}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-full px-4 font-bold"
+              >
+                {isAiParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+              </Button>
+            </div>
+          </form>
+          <p className="text-[10px] text-center mt-3 text-slate-400 font-medium uppercase tracking-widest">
+            AI-powered structured task creation
+          </p>
+        </div>
 
         {/* Primary User Tabs */}
         <div className="flex flex-col items-center mb-8">
@@ -221,9 +254,9 @@ export default function Home() {
                     value={userName}
                     className={cn(
                       "relative rounded-xl font-bold transition-all data-[state=active]:text-white h-12",
-                      userName === 'Owen' && "data-[state=active]:bg-blue-600",
-                      userName === 'Lucy' && "data-[state=active]:bg-pink-500",
-                      userName === 'Nick' && "data-[state=active]:bg-emerald-500"
+                      userName === 'Owen' && "data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/40",
+                      userName === 'Lucy' && "data-[state=active]:bg-pink-500 data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/40",
+                      userName === 'Nick' && "data-[state=active]:bg-emerald-500 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/40"
                     )}
                   >
                     <div className="flex flex-col items-center justify-center gap-0">
@@ -257,10 +290,13 @@ export default function Home() {
           </Tabs>
         </div>
 
+        {/* Team Analytics - Show below main tabs */}
+        <div className="mb-10 max-w-4xl mx-auto">
+          <ProductivityInsights tasks={tasks} />
+        </div>
+
         {/* Navigation & Controls */}
         <div className="space-y-6">
-          
-          {/* Time Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-2">
@@ -335,7 +371,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Filters */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex flex-1 flex-col md:flex-row items-center gap-3 w-full lg:max-w-3xl">
               <div className="relative w-full">
@@ -381,7 +416,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Main Content Area */}
           <main className="pt-4 min-h-[600px]">
             {viewMode === 'list' ? (
               <TaskListView 
