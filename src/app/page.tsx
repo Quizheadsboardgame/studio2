@@ -93,13 +93,14 @@ export default function Home() {
     let streak = 0;
     const today = new Date();
     
-    for (let i = 0; i < 30; i++) {
+    // 1. Calculate historical streak starting from yesterday
+    for (let i = 1; i < 30; i++) {
       const checkDate = subDays(today, i);
       const checkDateStr = format(checkDate, 'yyyy-MM-dd');
       const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
       
+      // If no tasks scheduled, it's a "pass" that maintains the streak
       if (dayTasks.length === 0) {
-        if (i === 0) continue; 
         streak++;
         continue;
       }
@@ -108,9 +109,20 @@ export default function Home() {
       if (dayCompleted === dayTasks.length) {
         streak++;
       } else {
+        // Streak broken in history
         break;
       }
     }
+
+    // 2. Check if today is completed to add to the streak
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
+    const todayCompleted = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed');
+    
+    if (todayCompleted) {
+      streak++;
+    }
+
     return streak;
   };
 
@@ -208,7 +220,7 @@ export default function Home() {
                   >
                     <div className="flex flex-col items-center justify-center gap-0">
                       <span className="relative z-10">{userName}</span>
-                      {streak > 1 && (
+                      {streak > 0 && (
                         <span className={cn(
                           "text-[9px] flex items-center gap-0.5",
                           isActive ? "text-white" : "text-orange-500"
@@ -406,4 +418,3 @@ export default function Home() {
     </div>
   );
 }
-

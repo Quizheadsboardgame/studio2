@@ -51,40 +51,41 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
   const getStats = (user: TaskUser) => {
     if (!todayStr) return { completed: 0, total: 0, percentage: 100, streak: 0 };
     
-    // Filter tasks specifically for this user and for TODAY'S date
+    // 1. Calculate Today's completion
     const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
     const completed = userTasksForToday.filter((t) => t.status === "Completed").length;
     const total = userTasksForToday.length;
-    
-    // If 0 tasks for today, completion is 100% (clean slate)
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
 
-    // Calculate Streak (Simplified calculation based on available task history)
-    let streak = 0;
-    const today = new Date();
+    // 2. Calculate Streak (Starting from yesterday)
+    let historicalStreak = 0;
+    const todayDate = new Date();
     
-    // Check backwards from today
-    for (let i = 0; i < 30; i++) {
-      const checkDate = subDays(today, i);
+    // Check backwards from yesterday (i=1)
+    for (let i = 1; i < 30; i++) {
+      const checkDate = subDays(todayDate, i);
       const checkDateStr = format(checkDate, 'yyyy-MM-dd');
       const dayTasks = tasks.filter(t => t.owner === user && t.dueDate === checkDateStr);
       
       if (dayTasks.length === 0) {
-        // If no tasks on this day, we'll count it as "passed" for the streak 
-        // unless it's the very first day we check and there's nothing.
-        if (i === 0) continue; 
-        streak++;
+        // If no tasks scheduled, streak persists
+        historicalStreak++;
         continue;
       }
       
       const dayCompleted = dayTasks.filter(t => t.status === 'Completed').length;
       if (dayCompleted === dayTasks.length) {
-        streak++;
+        historicalStreak++;
       } else {
-        // Streak broken
+        // Historical streak broken
         break;
       }
     }
+
+    // Add 1 if today is fully completed
+    const streak = (total > 0 && completed === total) || (total === 0) 
+      ? historicalStreak + 1 
+      : historicalStreak;
 
     return { completed, total, percentage, streak };
   };
@@ -105,8 +106,10 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     name: user,
     ...getStats(user),
   })).sort((a, b) => {
+    // Users with active tasks come first
     if (a.total > 0 && b.total === 0) return -1;
     if (a.total === 0 && b.total > 0) return 1;
+    // Then sort by percentage
     return b.percentage - a.percentage;
   });
 
@@ -190,7 +193,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                       )}>
                         {stat.name}
                       </p>
-                      {stat.streak > 1 && (
+                      {stat.streak > 0 && (
                         <div className="flex items-center gap-0.5 text-[10px] text-orange-500 font-bold">
                           <Flame className="h-3 w-3 fill-current" />
                           {stat.streak}
@@ -220,4 +223,3 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     </div>
   );
 }
-
