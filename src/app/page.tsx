@@ -9,7 +9,6 @@ import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { TaskDiaryView } from "@/components/task-diary-view";
 import { UserStats } from "@/components/user-stats";
-import { ProductivityInsights } from "@/components/productivity-insights";
 import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab, TaskUser } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,9 +27,7 @@ import {
   RefreshCw,
   LogOut,
   History,
-  Flame,
-  Sparkles,
-  Command
+  Flame
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,15 +59,12 @@ export default function Home() {
     moveTaskStatus,
     moveTaskDate,
     showPastCompleted,
-    setShowPastCompleted,
-    handleAiSmartAdd,
-    isAiParsing
+    setShowPastCompleted
   } = useTasks();
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
-  const [smartAddText, setSmartAddText] = React.useState("");
 
   React.useEffect(() => {
     if (isDarkMode) {
@@ -85,13 +79,6 @@ export default function Home() {
     if (template) {
       setEditingTask(template);
     }
-  };
-
-  const onSmartAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!smartAddText.trim()) return;
-    const success = await handleAiSmartAdd(smartAddText);
-    if (success) setSmartAddText("");
   };
 
   const getTabOutstandingCount = (tab: TaskTab) => {
@@ -204,41 +191,6 @@ export default function Home() {
         {/* User Stats & Daily Podium */}
         <UserStats tasks={tasks} activeUser={activeUser} />
 
-        {/* AI Smart-Add Command Bar */}
-        <div className="max-w-3xl mx-auto mb-10">
-          <form onSubmit={onSmartAddSubmit} className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <Sparkles className={cn(
-                "h-5 w-5 transition-colors",
-                isAiParsing ? "text-blue-500 animate-pulse" : "text-slate-400 group-focus-within:text-blue-500"
-              )} />
-            </div>
-            <Input 
-              placeholder={`Quick add task... (e.g. "Fix the sink tomorrow high priority")`}
-              value={smartAddText}
-              onChange={(e) => setSmartAddText(e.target.value)}
-              disabled={isAiParsing}
-              className="pl-12 pr-24 h-14 text-base bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
-            />
-            <div className="absolute right-2 top-2 bottom-2 flex items-center gap-1.5">
-              <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-400">
-                <Command className="h-3 w-3" /> ENTER
-              </div>
-              <Button 
-                type="submit"
-                disabled={!smartAddText.trim() || isAiParsing}
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-full px-4 font-bold"
-              >
-                {isAiParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
-              </Button>
-            </div>
-          </form>
-          <p className="text-[10px] text-center mt-3 text-slate-400 font-medium uppercase tracking-widest">
-            AI-powered structured task creation
-          </p>
-        </div>
-
         {/* Primary User Tabs */}
         <div className="flex flex-col items-center mb-8">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-lg">
@@ -288,11 +240,6 @@ export default function Home() {
               })}
             </TabsList>
           </Tabs>
-        </div>
-
-        {/* Team Analytics - Show below main tabs */}
-        <div className="mb-10 max-w-4xl mx-auto">
-          <ProductivityInsights tasks={tasks} />
         </div>
 
         {/* Navigation & Controls */}

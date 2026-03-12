@@ -15,7 +15,6 @@ import {
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { addDays, addWeeks, addMonths, parseISO, format, isBefore, startOfDay, isSameDay, getDay } from 'date-fns';
-import { parseTaskAI } from '@/ai/flows/parse-task-flow';
 
 export function useTasks() {
   const { user, isUserLoading } = useUser();
@@ -27,7 +26,6 @@ export function useTasks() {
   const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
   const [viewMode, setViewMode] = useState<'list' | 'board' | 'diary'>('list');
   const [showPastCompleted, setShowPastCompleted] = useState(false);
-  const [isAiParsing, setIsAiParsing] = useState(false);
 
   const [todayStr, setTodayStr] = useState<string>('');
   const [tomorrowStr, setTomorrowStr] = useState<string>('');
@@ -137,41 +135,6 @@ export function useTasks() {
     };
   };
 
-  const handleAiSmartAdd = async (text: string) => {
-    if (!text.trim() || !user || !tasksQuery) return;
-    setIsAiParsing(true);
-    try {
-      const parsed = await parseTaskAI({
-        text,
-        currentDate: todayStr,
-        activeUser: activeUser
-      });
-
-      let tab: TaskTab = 'Later';
-      if (parsed.dueDate === todayStr) tab = 'Today';
-      else if (parsed.dueDate === tomorrowStr) tab = 'Tomorrow';
-
-      const now = new Date().toISOString();
-      addDocumentNonBlocking(tasksQuery, {
-        ...parsed,
-        status: 'Incomplete',
-        tab,
-        createdBy: activeUser,
-        recurrence: 'None',
-        createdAt: now,
-        updatedAt: now,
-        userId: user.uid
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("AI Smart-Add failed:", error);
-      return false;
-    } finally {
-      setIsAiParsing(false);
-    }
-  };
-
   const updateTask = (updatedTask: Task) => {
     if (!db || !user || !tasksQuery) return;
     const now = new Date().toISOString();
@@ -263,8 +226,6 @@ export function useTasks() {
     moveTaskStatus,
     moveTaskDate,
     showPastCompleted,
-    setShowPastCompleted,
-    handleAiSmartAdd,
-    isAiParsing
+    setShowPastCompleted
   };
 }
