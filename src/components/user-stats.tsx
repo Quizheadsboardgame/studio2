@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Flame, Target, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, subDays, isSameDay, parseISO } from "date-fns";
+import { format, subDays, getDay } from "date-fns";
 
 interface UserStatsProps {
   tasks: Task[];
@@ -57,35 +57,38 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     const total = userTasksForToday.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
 
-    // 2. Calculate Streak (Starting from yesterday)
-    let historicalStreak = 0;
-    const todayDate = new Date();
-    
-    // Check backwards from yesterday (i=1)
-    for (let i = 1; i < 30; i++) {
-      const checkDate = subDays(todayDate, i);
-      const checkDateStr = format(checkDate, 'yyyy-MM-dd');
-      const dayTasks = tasks.filter(t => t.owner === user && t.dueDate === checkDateStr);
-      
-      if (dayTasks.length === 0) {
-        // If no tasks scheduled, streak persists
-        historicalStreak++;
-        continue;
-      }
-      
-      const dayCompleted = dayTasks.filter(t => t.status === 'Completed').length;
-      if (dayCompleted === dayTasks.length) {
-        historicalStreak++;
-      } else {
-        // Historical streak broken
-        break;
-      }
-    }
+    // 2. Calculate Streak (Starts from today, ignores weekends)
+    let streak = 0;
+    const today = new Date();
+    let offset = 0;
+    let weekdaysChecked = 0;
+    const MAX_LOOKBACK = 90;
 
-    // Add 1 if today is fully completed
-    const streak = (total > 0 && completed === total) || (total === 0) 
-      ? historicalStreak + 1 
-      : historicalStreak;
+    while (weekdaysChecked < 30 && offset < MAX_LOOKBACK) {
+      const checkDate = subDays(today, offset);
+      const dayOfWeek = getDay(checkDate);
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      if (!isWeekend) {
+        const checkDateStr = format(checkDate, 'yyyy-MM-dd');
+        const dayTasks = tasks.filter(t => t.owner === user && t.dueDate === checkDateStr);
+        
+        if (dayTasks.length === 0) {
+          // If past day (offset > 0) and no tasks scheduled, streak persists
+          if (offset > 0) streak++;
+        } else {
+          const allComplete = dayTasks.every(t => t.status === 'Completed');
+          if (allComplete) {
+            streak++;
+          } else {
+            // Break only if we found an incomplete day in the past
+            if (offset > 0) break;
+          }
+        }
+        weekdaysChecked++;
+      }
+      offset++;
+    }
 
     return { completed, total, percentage, streak };
   };
@@ -136,7 +139,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                   {activeUser}'s Daily Progress
                   {activeStats.streak > 0 && (
                     <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full dark:bg-orange-900/30 dark:text-orange-400">
-                      <Zap className="h-3 w-3 fill-current" /> {activeStats.streak} Day Streak
+                      <Zap className="h-3 w-3 fill-current" /> {activeStats.streak} Day Working Streak
                     </span>
                   )}
                 </h2>

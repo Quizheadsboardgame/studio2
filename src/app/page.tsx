@@ -33,7 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from "firebase/auth";
-import { format, subDays } from "date-fns";
+import { format, subDays, getDay } from "date-fns";
 
 export default function Home() {
   const { user } = useUser();
@@ -90,37 +90,40 @@ export default function Home() {
   };
 
   const getUserStreak = (userName: TaskUser) => {
+    if (!isLoaded) return 0;
+    
     let streak = 0;
     const today = new Date();
-    
-    // 1. Calculate historical streak starting from yesterday
-    for (let i = 1; i < 30; i++) {
-      const checkDate = subDays(today, i);
-      const checkDateStr = format(checkDate, 'yyyy-MM-dd');
-      const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
-      
-      // If no tasks scheduled, it's a "pass" that maintains the streak
-      if (dayTasks.length === 0) {
-        streak++;
-        continue;
-      }
-      
-      const dayCompleted = dayTasks.filter(t => t.status === 'Completed').length;
-      if (dayCompleted === dayTasks.length) {
-        streak++;
-      } else {
-        // Streak broken in history
-        break;
-      }
-    }
+    let offset = 0;
+    let weekdaysChecked = 0;
+    const MAX_LOOKBACK = 90;
 
-    // 2. Check if today is completed to add to the streak
-    const todayStr = format(today, 'yyyy-MM-dd');
-    const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
-    const todayCompleted = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed');
-    
-    if (todayCompleted) {
-      streak++;
+    // Look back to find consecutive completed weekdays
+    while (weekdaysChecked < 30 && offset < MAX_LOOKBACK) {
+      const checkDate = subDays(today, offset);
+      const dayOfWeek = getDay(checkDate);
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0=Sun, 6=Sat
+
+      if (!isWeekend) {
+        const checkDateStr = format(checkDate, 'yyyy-MM-dd');
+        const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
+        
+        if (dayTasks.length === 0) {
+          // If past day (offset > 0) and no tasks scheduled, it's a pass that maintains the streak
+          if (offset > 0) streak++;
+        } else {
+          const allComplete = dayTasks.every(t => t.status === 'Completed');
+          if (allComplete) {
+            streak++;
+          } else {
+            // If it's today and not complete, we don't increment but we keep looking back
+            // If it's a past day and incomplete, the streak is broken
+            if (offset > 0) break;
+          }
+        }
+        weekdaysChecked++;
+      }
+      offset++;
     }
 
     return streak;
