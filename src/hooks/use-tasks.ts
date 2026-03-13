@@ -15,7 +15,7 @@ import {
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { addDays, addWeeks, addMonths, parseISO, format, isBefore, startOfDay, isSameDay, getDay } from 'date-fns';
+import { addDays, addWeeks, addMonths, parseISO, format, getDay } from 'date-fns';
 
 export function useTasks() {
   const { user, isUserLoading } = useUser();
@@ -39,12 +39,14 @@ export function useTasks() {
     
     setTodayStr(format(today, 'yyyy-MM-dd'));
     
-    // Logic: If today is Friday (5) or Saturday (6), "Tomorrow" is Monday.
+    // WEEKEND LOGIC: If today is Friday (5), Saturday (6), or Sunday (0), "Tomorrow" is Monday.
     let nextWorkingDay = addDays(today, 1);
     if (dayOfWeek === 5) { // Friday -> Monday
       nextWorkingDay = addDays(today, 3);
     } else if (dayOfWeek === 6) { // Saturday -> Monday
       nextWorkingDay = addDays(today, 2);
+    } else if (dayOfWeek === 0) { // Sunday -> Monday
+      nextWorkingDay = addDays(today, 1);
     }
     setTomorrowStr(format(nextWorkingDay, 'yyyy-MM-dd'));
   }, []);
@@ -72,12 +74,9 @@ export function useTasks() {
       if (syncRef.current.has(syncKey)) return;
 
       let correctTab: TaskTab = 'Later';
-      // If due today or in the past, it's 'Today'
       if (task.dueDate <= todayStr) {
         correctTab = 'Today';
-      } 
-      // If due on the next defined working day (tomorrowStr), it's 'Tomorrow'
-      else if (task.dueDate === tomorrowStr) {
+      } else if (task.dueDate === tomorrowStr) {
         correctTab = 'Tomorrow';
       }
 
@@ -115,8 +114,8 @@ export function useTasks() {
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
-        const aStatus = a.status === 'Completed' ? 1 : 0;
-        const bStatus = b.status === 'Completed' ? 1 : 0;
+        const aStatus = (a.status === 'Completed' || a.status === 'Awaiting Information') ? 1 : 0;
+        const bStatus = (b.status === 'Completed' || b.status === 'Awaiting Information') ? 1 : 0;
         if (aStatus !== bStatus) return aStatus - bStatus;
 
         const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
@@ -136,14 +135,14 @@ export function useTasks() {
     return {
       id: 'new',
       name: '',
-      status: 'Incomplete' as TaskStatus,
-      priority: 'Medium' as any,
+      status: 'Incomplete',
+      priority: 'Medium',
       dueDate: defaultDueDate,
       notes: '',
       tab: activeTab,
       owner: activeUser,
       createdBy: activeUser,
-      recurrence: 'None' as TaskRecurrence,
+      recurrence: 'None',
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
       userId: user.uid,
@@ -202,7 +201,7 @@ export function useTasks() {
         t.dueDate === nextDueDateStr && t.owner === task.owner && t.status !== 'Completed'
       );
       if (!alreadyExists) {
-        const { id: _, ...dataForNewTask } = { ...task, status: 'Incomplete' as TaskStatus, dueDate: nextDueDateStr, createdAt: now, updatedAt: now };
+        const { id: _, ...dataForNewTask } = { ...task, status: 'Incomplete', dueDate: nextDueDateStr, createdAt: now, updatedAt: now };
         addDocumentNonBlocking(tasksQuery, dataForNewTask);
       }
     }
@@ -218,12 +217,9 @@ export function useTasks() {
     const dayOfWeek = getDay(currentDueDate);
     
     let nextDate = addDays(currentDueDate, 1);
-    // If it's Friday (5) or Saturday (6), the next working day is Monday (+3 or +2 days)
-    if (dayOfWeek === 5) { // Friday -> Monday
-      nextDate = addDays(currentDueDate, 3);
-    } else if (dayOfWeek === 6) { // Saturday -> Monday
-      nextDate = addDays(currentDueDate, 2);
-    }
+    // WEEKEND LOGIC: Friday (5) or Saturday (6) moves jump to Monday.
+    if (dayOfWeek === 5) nextDate = addDays(currentDueDate, 3);
+    else if (dayOfWeek === 6) nextDate = addDays(currentDueDate, 2);
     
     const nextDateStr = format(nextDate, 'yyyy-MM-dd');
     let newTab: TaskTab = 'Later';

@@ -83,7 +83,7 @@ export default function Home() {
   };
 
   const getTabOutstandingCount = (tab: TaskTab) => {
-    // Exclude 'Completed' and 'Awaiting Information' from the "to do" count
+    // Exclude 'Completed' AND 'Awaiting Information' as requested
     return tasks.filter(t => 
       t.owner === activeUser && 
       t.tab === tab && 
@@ -93,7 +93,7 @@ export default function Home() {
   };
 
   const getUserOutstandingCount = (userName: TaskUser) => {
-    // Exclude 'Completed' and 'Awaiting Information' from the "to do" count
+    // Exclude 'Completed' AND 'Awaiting Information' as requested
     return tasks.filter(t => 
       t.owner === userName && 
       t.status !== 'Completed' && 
@@ -117,7 +117,7 @@ export default function Home() {
       if (!isWeekend) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
-        // Streak is preserved if no tasks were scheduled OR all tasks were actioned (Completed or Awaiting Information)
+        // Successful if everything is Completed or Awaiting Information
         const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
         if (isDaySuccessful) streak++;
         else break;
@@ -127,7 +127,6 @@ export default function Home() {
     }
     const todayStr = format(today, 'yyyy-MM-dd');
     const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
-    // Today counts toward the streak if it's currently 100% actioned
     const todayActioned = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
     if (todayActioned) streak++;
     return streak;
@@ -154,7 +153,6 @@ export default function Home() {
     )}>
       <div className="max-w-7xl mx-auto px-4 py-8">
         
-        {/* Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
           <div>
             <h1 className="text-3xl font-bold font-headline text-slate-900 dark:text-slate-50 flex items-center gap-2">
@@ -202,10 +200,8 @@ export default function Home() {
           </div>
         </header>
 
-        {/* User Stats & Daily Podium */}
         <UserStats tasks={tasks} activeUser={activeUser} />
 
-        {/* Primary User Tabs */}
         <div className="flex flex-col items-center mb-8">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-lg">
             <TabsList className="grid w-full grid-cols-3 h-14 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
@@ -220,9 +216,9 @@ export default function Home() {
                     value={userName}
                     className={cn(
                       "relative rounded-xl font-bold transition-all data-[state=active]:text-white h-12",
-                      userName === 'Owen' && "data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/40",
-                      userName === 'Lucy' && "data-[state=active]:bg-pink-500 data-[state=active]:shadow-lg data-[state=active]:shadow-pink-500/40",
-                      userName === 'Nick' && "data-[state=active]:bg-emerald-500 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/40"
+                      userName === 'Owen' && "data-[state=active]:bg-blue-600",
+                      userName === 'Lucy' && "data-[state=active]:bg-pink-500",
+                      userName === 'Nick' && "data-[state=active]:bg-emerald-500"
                     )}
                   >
                     <div className="flex flex-col items-center justify-center gap-0">
@@ -239,9 +235,7 @@ export default function Home() {
                     {count > 0 && (
                       <span className={cn(
                         "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
-                        isActive 
-                          ? "bg-white border-white shadow-sm" 
-                          : "bg-slate-900 text-white border-white dark:border-slate-800",
+                        isActive ? "bg-white border-white" : "bg-slate-900 text-white border-white dark:border-slate-800",
                         isActive && userName === 'Owen' && "text-blue-600",
                         isActive && userName === 'Lucy' && "text-pink-500",
                         isActive && userName === 'Nick' && "text-emerald-500"
@@ -256,12 +250,11 @@ export default function Home() {
           </Tabs>
         </div>
 
-        {/* Navigation & Controls */}
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Outstanding Tasks</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Outstanding Tasks</span>
               </div>
               <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
                 {TAB_OPTIONS.map((tab) => {
@@ -272,22 +265,17 @@ export default function Home() {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      disabled={viewMode === 'diary'}
                       className={cn(
-                        "relative px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 min-w-[100px]",
-                        isActive
-                          ? "bg-blue-600 text-white shadow-md scale-105" 
-                          : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700",
+                        "relative px-5 py-2 text-sm font-semibold rounded-lg transition-all min-w-[100px]",
+                        isActive ? "bg-blue-600 text-white shadow-md scale-105" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50",
                         viewMode === 'diary' && "opacity-50 cursor-not-allowed"
                       )}
                     >
-                      <span className="relative z-10">{tab}</span>
+                      <span>{tab}</span>
                       {count > 0 && (
                         <span className={cn(
                           "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
-                          isActive 
-                            ? "bg-white text-blue-600 border-blue-600" 
-                            : "bg-blue-600 text-white border-white dark:border-slate-800"
+                          isActive ? "bg-white text-blue-600 border-blue-600" : "bg-blue-600 text-white border-white dark:border-slate-800"
                         )}>
                           {count}
                         </span>
@@ -301,31 +289,19 @@ export default function Home() {
             <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border dark:border-slate-700 flex items-center h-12">
               <button 
                 onClick={() => setViewMode('list')}
-                className={cn(
-                  "p-2 rounded-lg transition-all",
-                  viewMode === 'list' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-                title="List View"
+                className={cn("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
               >
                 <LayoutList className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('board')}
-                className={cn(
-                  "p-2 rounded-lg transition-all",
-                  viewMode === 'board' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-                title="Board View"
+                className={cn("p-2 rounded-lg transition-all", viewMode === 'board' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
               >
                 <LayoutGrid className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('diary')}
-                className={cn(
-                  "p-2 rounded-lg transition-all",
-                  viewMode === 'diary' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-                title="Diary View"
+                className={cn("p-2 rounded-lg transition-all", viewMode === 'diary' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
               >
                 <CalendarRange className="h-5 w-5" />
               </button>
@@ -340,35 +316,32 @@ export default function Home() {
                   placeholder="Search tasks..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl shadow-sm focus:ring-blue-500"
+                  className="pl-10 h-11 bg-white dark:bg-slate-800 border-slate-200 rounded-xl"
                 />
               </div>
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <div className="relative w-full md:min-w-[160px]">
-                  <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val as any)}>
-                    <SelectTrigger className="h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
-                      <div className="flex items-center gap-2">
-                        <Filter className="h-3.5 w-3.5 text-slate-400" />
-                        <SelectValue placeholder="All Status" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Status</SelectItem>
-                      {STATUS_OPTIONS.map((opt) => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val as any)}>
+                  <SelectTrigger className="h-11 bg-white dark:bg-slate-800 border-slate-200 rounded-xl md:min-w-[160px]">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-3.5 w-3.5 text-slate-400" />
+                      <SelectValue placeholder="All Status" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Status</SelectItem>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 
                 <Button 
                   variant="outline" 
                   onClick={() => setShowPastCompleted(!showPastCompleted)}
                   className={cn(
-                    "h-11 rounded-xl px-4 whitespace-nowrap border-slate-200 dark:border-slate-700",
+                    "h-11 rounded-xl px-4",
                     showPastCompleted ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600" : "bg-white dark:bg-slate-800"
                   )}
-                  title={showPastCompleted ? "Hide past completed tasks" : "Show past completed tasks"}
                 >
                   <History className="h-4 w-4 mr-2" />
                   {showPastCompleted ? "Hide Past Done" : "Show Past Done"}
