@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -50,13 +51,16 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
   }, []);
 
   const getStats = (user: TaskUser) => {
-    if (!todayStr) return { completed: 0, total: 0, percentage: 100, streak: 0 };
+    if (!todayStr) return { completed: 0, total: 0, percentage: 100, streak: 0, remaining: 0 };
     
     // 1. Calculate Today's completion
     const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
     const completed = userTasksForToday.filter((t) => t.status === "Completed").length;
     const total = userTasksForToday.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
+
+    // "To Do" count excludes both Completed and In Progress
+    const remaining = userTasksForToday.filter((t) => t.status !== "Completed" && t.status !== "In Progress").length;
 
     // 2. Calculate Streak (Starts from yesterday, ignores weekends, stops at hard start date)
     let streak = 0;
@@ -101,7 +105,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
       streak++;
     }
 
-    return { completed, total, percentage, streak };
+    return { completed, total, percentage, streak, remaining };
   };
 
   const activeStats = getStats(activeUser);
@@ -164,7 +168,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                 {activeStats.percentage}%
               </span>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {activeStats.completed} of {activeStats.total} Tasks Done
+                {activeStats.remaining} Tasks Remaining to Start
               </p>
             </div>
           </div>
@@ -215,7 +219,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                       )}
                     </div>
                     <p className="text-[10px] text-muted-foreground font-semibold">
-                      {stat.total === 0 ? "0 tasks (Clean!)" : `${stat.completed}/${stat.total} today`}
+                      {stat.remaining} left to start
                     </p>
                   </div>
                 </div>

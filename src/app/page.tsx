@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -82,11 +83,22 @@ export default function Home() {
   };
 
   const getTabOutstandingCount = (tab: TaskTab) => {
-    return tasks.filter(t => t.owner === activeUser && t.tab === tab && t.status !== 'Completed').length;
+    // Exclude 'Completed' and 'In Progress' from the "to do" count
+    return tasks.filter(t => 
+      t.owner === activeUser && 
+      t.tab === tab && 
+      t.status !== 'Completed' && 
+      t.status !== 'In Progress'
+    ).length;
   };
 
   const getUserOutstandingCount = (userName: TaskUser) => {
-    return tasks.filter(t => t.owner === userName && t.status !== 'Completed').length;
+    // Exclude 'Completed' and 'In Progress' from the "to do" count
+    return tasks.filter(t => 
+      t.owner === userName && 
+      t.status !== 'Completed' && 
+      t.status !== 'In Progress'
+    ).length;
   };
 
   const getUserStreak = (userName: TaskUser) => {
