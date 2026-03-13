@@ -35,8 +35,18 @@ export function useTasks() {
 
   useEffect(() => {
     const today = new Date();
+    const dayOfWeek = getDay(today);
+    
     setTodayStr(format(today, 'yyyy-MM-dd'));
-    setTomorrowStr(format(addDays(today, 1), 'yyyy-MM-dd'));
+    
+    // Logic: If today is Friday (5) or Saturday (6), "Tomorrow" is Monday.
+    let nextWorkingDay = addDays(today, 1);
+    if (dayOfWeek === 5) { // Friday -> Monday
+      nextWorkingDay = addDays(today, 3);
+    } else if (dayOfWeek === 6) { // Saturday -> Monday
+      nextWorkingDay = addDays(today, 2);
+    }
+    setTomorrowStr(format(nextWorkingDay, 'yyyy-MM-dd'));
   }, []);
 
   useEffect(() => {
@@ -53,6 +63,7 @@ export function useTasks() {
   const { data: firestoreTasks, isLoading: isTasksLoading } = useCollection<Task>(tasksQuery);
   const tasks = firestoreTasks || [];
 
+  // Automatic Tab Synchronization Logic
   useEffect(() => {
     if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
 
@@ -61,9 +72,12 @@ export function useTasks() {
       if (syncRef.current.has(syncKey)) return;
 
       let correctTab: TaskTab = 'Later';
-      if (task.dueDate === todayStr || task.dueDate < todayStr) {
+      // If due today or in the past, it's 'Today'
+      if (task.dueDate <= todayStr) {
         correctTab = 'Today';
-      } else if (task.dueDate === tomorrowStr) {
+      } 
+      // If due on the next defined working day (tomorrowStr), it's 'Tomorrow'
+      else if (task.dueDate === tomorrowStr) {
         correctTab = 'Tomorrow';
       }
 
@@ -199,14 +213,29 @@ export function useTasks() {
     if (!db || !user) return;
     const task = tasks.find(t => t.id === id);
     if (!task) return;
+    
     const currentDueDate = parseISO(task.dueDate);
-    const nextDate = addDays(currentDueDate, 1);
+    const dayOfWeek = getDay(currentDueDate);
+    
+    let nextDate = addDays(currentDueDate, 1);
+    // If it's Friday (5) or Saturday (6), the next working day is Monday (+3 or +2 days)
+    if (dayOfWeek === 5) { // Friday -> Monday
+      nextDate = addDays(currentDueDate, 3);
+    } else if (dayOfWeek === 6) { // Saturday -> Monday
+      nextDate = addDays(currentDueDate, 2);
+    }
+    
     const nextDateStr = format(nextDate, 'yyyy-MM-dd');
     let newTab: TaskTab = 'Later';
     if (nextDateStr === todayStr) newTab = 'Today';
     else if (nextDateStr === tomorrowStr) newTab = 'Tomorrow';
+    
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
-    updateDocumentNonBlocking(taskRef, { dueDate: nextDateStr, tab: newTab, updatedAt: new Date().toISOString() });
+    updateDocumentNonBlocking(taskRef, { 
+      dueDate: nextDateStr, 
+      tab: newTab, 
+      updatedAt: new Date().toISOString() 
+    });
   };
 
   return {
