@@ -117,8 +117,9 @@ export default function Home() {
       if (!isWeekend) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
-        const isDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed');
-        if (isDone) streak++;
+        // Streak is preserved if no tasks were scheduled OR all tasks were actioned (Completed or In Progress)
+        const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'In Progress');
+        if (isDaySuccessful) streak++;
         else break;
       }
       offset++;
@@ -126,8 +127,9 @@ export default function Home() {
     }
     const todayStr = format(today, 'yyyy-MM-dd');
     const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
-    const todayDone = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed');
-    if (todayDone) streak++;
+    // Today counts toward the streak if it's currently 100% actioned
+    const todayActioned = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed' || t.status === 'In Progress');
+    if (todayActioned) streak++;
     return streak;
   };
 

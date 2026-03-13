@@ -55,11 +55,13 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     
     // 1. Calculate Today's completion
     const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
-    const completed = userTasksForToday.filter((t) => t.status === "Completed").length;
+    
+    // A task is considered "done" for percentage/streak purposes if it's Completed OR In Progress (per user request)
+    const actionedCount = userTasksForToday.filter((t) => t.status === "Completed" || t.status === "In Progress").length;
     const total = userTasksForToday.length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 100;
+    const percentage = total > 0 ? Math.round((actionedCount / total) * 100) : 100;
 
-    // "To Do" count excludes both Completed and In Progress
+    // "To Do" count strictly excludes both Completed and In Progress
     const remaining = userTasksForToday.filter((t) => t.status !== "Completed" && t.status !== "In Progress").length;
 
     // 2. Calculate Streak (Starts from yesterday, ignores weekends, stops at hard start date)
@@ -85,10 +87,10 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === user && t.dueDate === checkDateStr);
         
-        // Success if no tasks scheduled OR all tasks completed
-        const isDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed');
+        // Success if no tasks scheduled OR all tasks are "Actioned" (Completed/In Progress)
+        const isDayDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'In Progress');
         
-        if (isDone) {
+        if (isDayDone) {
           streak++;
         } else {
           break; // Streak broken by incomplete day
@@ -99,13 +101,13 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
       daysChecked++;
     }
 
-    // Add today if today is also complete
-    const todayDone = total > 0 && completed === total;
-    if (todayDone) {
+    // Add today if today is also complete (all tasks are Actioned)
+    const todayActioned = total > 0 && actionedCount === total;
+    if (todayActioned) {
       streak++;
     }
 
-    return { completed, total, percentage, streak, remaining };
+    return { completed: actionedCount, total, percentage, streak, remaining };
   };
 
   const activeStats = getStats(activeUser);
