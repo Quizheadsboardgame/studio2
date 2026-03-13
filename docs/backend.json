@@ -62,7 +62,8 @@
         },
         "status": {
           "type": "string",
-          "description": "The current completion status of the task."
+          "description": "The current completion status of the task.",
+          "enum": ["Incomplete", "Awaiting Information", "Follow up Required", "Completed"]
         },
         "priority": {
           "type": "string",

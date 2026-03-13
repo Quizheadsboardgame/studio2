@@ -26,7 +26,7 @@ const USER_THEMES = {
 };
 
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
-  const [formData, setFormData] = React.useState<Task | null>(null);
+  const [formData, setFormData] = React.setFormData<Task | null>(null);
 
   React.useEffect(() => {
     if (task) {
