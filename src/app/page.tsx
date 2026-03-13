@@ -33,9 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from "firebase/auth";
-import { format, subDays, getDay, isBefore, parseISO } from "date-fns";
-
-const STREAK_START_DATE = '2026-03-11';
+import { addDays, format } from "date-fns";
 
 export default function Home() {
   const { user } = useUser();
@@ -43,6 +41,9 @@ export default function Home() {
   const {
     tasks,
     filteredTasks,
+    tabCounts,
+    userCounts,
+    userStreaks,
     isLoaded,
     searchQuery,
     setSearchQuery,
@@ -54,13 +55,14 @@ export default function Home() {
     setActiveUser,
     viewMode,
     setViewMode,
-    getNewTaskTemplate,
     updateTask,
     deleteTask,
     moveTaskStatus,
     moveTaskDate,
     showPastCompleted,
-    setShowPastCompleted
+    setShowPastCompleted,
+    todayStr,
+    tomorrowStr
   } = useTasks();
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
@@ -76,60 +78,30 @@ export default function Home() {
   }, [isDarkMode]);
 
   const handleCreateNewTask = () => {
-    const template = getNewTaskTemplate();
-    if (template) {
-      setEditingTask(template);
-    }
-  };
+    if (!user) return;
+    
+    let defaultDueDate = todayStr;
+    if (activeTab === 'Tomorrow') defaultDueDate = tomorrowStr;
+    else if (activeTab === 'Later') defaultDueDate = format(addDays(new Date(), 2), 'yyyy-MM-dd');
 
-  const getTabOutstandingCount = (tab: TaskTab) => {
-    // Exclude 'Completed' AND 'Awaiting Information' as requested
-    return tasks.filter(t => 
-      t.owner === activeUser && 
-      t.tab === tab && 
-      t.status !== 'Completed' && 
-      t.status !== 'Awaiting Information'
-    ).length;
-  };
-
-  const getUserOutstandingCount = (userName: TaskUser) => {
-    // Exclude 'Completed' AND 'Awaiting Information' as requested
-    return tasks.filter(t => 
-      t.owner === userName && 
-      t.status !== 'Completed' && 
-      t.status !== 'Awaiting Information'
-    ).length;
-  };
-
-  const getUserStreak = (userName: TaskUser) => {
-    if (!isLoaded) return 0;
-    let streak = 0;
-    const today = new Date();
-    const startDate = parseISO(STREAK_START_DATE);
-    let offset = 1; 
-    let daysChecked = 0;
-    const MAX_LOOKBACK = 60;
-    while (daysChecked < MAX_LOOKBACK) {
-      const checkDate = subDays(today, offset);
-      if (isBefore(checkDate, startDate)) break;
-      const dayOfWeek = getDay(checkDate);
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      if (!isWeekend) {
-        const checkDateStr = format(checkDate, 'yyyy-MM-dd');
-        const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
-        // Successful if everything is Completed or Awaiting Information
-        const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
-        if (isDaySuccessful) streak++;
-        else break;
-      }
-      offset++;
-      daysChecked++;
-    }
-    const todayStr = format(today, 'yyyy-MM-dd');
-    const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
-    const todayActioned = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
-    if (todayActioned) streak++;
-    return streak;
+    const template: Task = {
+      id: 'new',
+      name: '',
+      status: 'Incomplete',
+      priority: 'Medium',
+      dueDate: defaultDueDate,
+      notes: '',
+      tab: activeTab,
+      owner: activeUser,
+      createdBy: activeUser,
+      recurrence: 'None',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      userId: user.uid,
+      startTime: '',
+      endTime: ''
+    };
+    setEditingTask(template);
   };
 
   if (!isLoaded) {
@@ -200,14 +172,14 @@ export default function Home() {
           </div>
         </header>
 
-        <UserStats tasks={tasks} activeUser={activeUser} />
+        <UserStats tasks={tasks} activeUser={activeUser} streaks={userStreaks} />
 
         <div className="flex flex-col items-center mb-8">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-lg">
             <TabsList className="grid w-full grid-cols-3 h-14 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
               {USER_OPTIONS.map((userName) => {
-                const count = getUserOutstandingCount(userName);
-                const streak = getUserStreak(userName);
+                const count = userCounts[userName] || 0;
+                const streak = userStreaks[userName] || 0;
                 const isActive = activeUser === userName;
                 
                 return (
@@ -258,7 +230,7 @@ export default function Home() {
               </div>
               <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
                 {TAB_OPTIONS.map((tab) => {
-                  const count = getTabOutstandingCount(tab);
+                  const count = tabCounts[tab] || 0;
                   const isActive = activeTab === tab && viewMode !== 'diary';
                   
                   return (

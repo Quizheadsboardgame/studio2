@@ -5,16 +5,15 @@ import * as React from "react";
 import { Task, TaskUser, USER_OPTIONS } from "@/types/task";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Flame, Target, Star, Zap } from "lucide-react";
+import { Trophy, Flame, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, subDays, getDay, isBefore, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 interface UserStatsProps {
   tasks: Task[];
   activeUser: TaskUser;
+  streaks: Record<string, number>;
 }
-
-const STREAK_START_DATE = '2026-03-11';
 
 const USER_COLORS = {
   'Owen': {
@@ -43,74 +42,47 @@ const USER_COLORS = {
   }
 };
 
-export function UserStats({ tasks, activeUser }: UserStatsProps) {
+export function UserStats({ tasks, activeUser, streaks }: UserStatsProps) {
   const [todayStr, setTodayStr] = React.useState<string>("");
 
   React.useEffect(() => {
     setTodayStr(format(new Date(), 'yyyy-MM-dd'));
   }, []);
 
-  const getStats = (user: TaskUser) => {
-    if (!todayStr) return { completed: 0, total: 0, percentage: 100, streak: 0, remaining: 0 };
+  const getStats = React.useCallback((user: TaskUser) => {
+    if (!todayStr) return { completed: 0, total: 0, percentage: 100, remaining: 0 };
     
-    // 1. Calculate Today's completion
     const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
     
-    // A task is considered "done" for percentage/streak purposes if it's Completed OR Awaiting Information
-    const actionedCount = userTasksForToday.filter((t) => t.status === "Completed" || t.status === "Awaiting Information").length;
+    // Actioned tasks = Completed OR Awaiting Information
+    const actionedCount = userTasksForToday.filter((t) => 
+      t.status === "Completed" || t.status === "Awaiting Information"
+    ).length;
+    
     const total = userTasksForToday.length;
     const percentage = total > 0 ? Math.round((actionedCount / total) * 100) : 100;
 
-    // "To Do" count strictly excludes both Completed and Awaiting Information
-    const remaining = userTasksForToday.filter((t) => t.status !== "Completed" && t.status !== "Awaiting Information").length;
+    // Remaining tasks = Incomplete OR Follow up Required
+    const remaining = userTasksForToday.filter((t) => 
+      t.status === "Incomplete" || t.status === "Follow up Required"
+    ).length;
 
-    // 2. Calculate Streak (Starts from yesterday, ignores weekends, stops at hard start date)
-    let streak = 0;
-    const today = new Date();
-    const startDate = parseISO(STREAK_START_DATE);
-    
-    // Check up to 60 days back starting from yesterday
-    let offset = 1;
-    let daysChecked = 0;
-    const MAX_LOOKBACK = 60;
+    return { completed: actionedCount, total, percentage, remaining };
+  }, [tasks, todayStr]);
 
-    while (daysChecked < MAX_LOOKBACK) {
-      const checkDate = subDays(today, offset);
-      
-      // Stop if we hit the hard-coded start date
-      if (isBefore(checkDate, startDate)) break;
+  const allUserStats = React.useMemo(() => {
+    return USER_OPTIONS.map((user) => ({
+      name: user,
+      ...getStats(user),
+      streak: streaks[user] || 0
+    })).sort((a, b) => {
+      if (a.total > 0 && b.total === 0) return -1;
+      if (a.total === 0 && b.total > 0) return 1;
+      return b.percentage - a.percentage;
+    });
+  }, [getStats, streaks]);
 
-      const dayOfWeek = getDay(checkDate);
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-      if (!isWeekend) {
-        const checkDateStr = format(checkDate, 'yyyy-MM-dd');
-        const dayTasks = tasks.filter(t => t.owner === user && t.dueDate === checkDateStr);
-        
-        // Success if no tasks scheduled OR all tasks are "Actioned" (Completed/Awaiting Information)
-        const isDayDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
-        
-        if (isDayDone) {
-          streak++;
-        } else {
-          break; // Streak broken by incomplete day
-        }
-      }
-      // Continue to previous day
-      offset++;
-      daysChecked++;
-    }
-
-    // Add today if today is also complete (all tasks are Actioned)
-    const todayActioned = total > 0 && actionedCount === total;
-    if (todayActioned) {
-      streak++;
-    }
-
-    return { completed: actionedCount, total, percentage, streak, remaining };
-  };
-
-  const activeStats = getStats(activeUser);
+  const activeStats = React.useMemo(() => getStats(activeUser), [getStats, activeUser]);
   const activeUserTheme = USER_COLORS[activeUser];
 
   const encouragingWords = React.useMemo(() => {
@@ -122,20 +94,8 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     return "Legendary status! You've crushed your schedule!";
   }, [activeStats]);
 
-  const allUserStats = USER_OPTIONS.map((user) => ({
-    name: user,
-    ...getStats(user),
-  })).sort((a, b) => {
-    // Users with active tasks come first
-    if (a.total > 0 && b.total === 0) return -1;
-    if (a.total === 0 && b.total > 0) return 1;
-    // Then sort by percentage
-    return b.percentage - a.percentage;
-  });
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-      {/* Active User Progress */}
       <Card className={cn(
         "lg:col-span-2 overflow-hidden border-2 shadow-lg transition-all duration-500",
         activeUserTheme.border,
@@ -149,14 +109,14 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
                 "h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner",
                 activeUserTheme.soft
               )}>
-                <Flame className={cn("h-8 w-8", activeUserTheme.text, activeStats.percentage === 100 && "animate-pulse")} />
+                <Flame className={cn("h-8 w-8", activeUserTheme.text, activeStats.percentage === 100 && activeStats.total > 0 && "animate-pulse")} />
               </div>
               <div>
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   {activeUser}'s Daily Progress
-                  {activeStats.streak > 0 && (
+                  {streaks[activeUser] > 0 && (
                     <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full dark:bg-orange-900/30 dark:text-orange-400">
-                      <Zap className="h-3 w-3 fill-current" /> {activeStats.streak} Day Working Streak
+                      <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]} Day Working Streak
                     </span>
                   )}
                 </h2>
@@ -184,7 +144,6 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
         </CardContent>
       </Card>
 
-      {/* Leaderboard Competition */}
       <Card className="border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg shadow-slate-500/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-400">
@@ -194,7 +153,7 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {allUserStats.map((stat, index) => {
-            const userTheme = USER_COLORS[stat.name];
+            const userTheme = USER_COLORS[stat.name as TaskUser];
             return (
               <div key={stat.name} className="flex items-center justify-between gap-3 group">
                 <div className="flex items-center gap-3">

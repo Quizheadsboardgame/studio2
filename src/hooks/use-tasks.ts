@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Task, TaskStatus, TaskTab, TaskUser, TaskRecurrence, PRIORITY_ORDER } from '@/types/task';
+import { Task, TaskStatus, TaskTab, TaskUser, TaskRecurrence, PRIORITY_ORDER, STATUS_OPTIONS, USER_OPTIONS } from '@/types/task';
 import { 
   useUser, 
   useFirestore, 
@@ -15,12 +15,15 @@ import {
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { addDays, addWeeks, addMonths, parseISO, format, getDay } from 'date-fns';
+import { addDays, addWeeks, addMonths, parseISO, format, getDay, subDays, isBefore } from 'date-fns';
+
+const STREAK_START_DATE = '2026-03-11';
 
 export function useTasks() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const auth = useAuth();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [activeTab, setActiveTab] = useState<TaskTab>('Today');
@@ -39,7 +42,6 @@ export function useTasks() {
     
     setTodayStr(format(today, 'yyyy-MM-dd'));
     
-    // WEEKEND LOGIC: If today is Friday (5), Saturday (6), or Sunday (0), "Tomorrow" is Monday.
     let nextWorkingDay = addDays(today, 1);
     if (dayOfWeek === 5) { // Friday -> Monday
       nextWorkingDay = addDays(today, 3);
@@ -63,7 +65,7 @@ export function useTasks() {
   }, [db, user]);
 
   const { data: firestoreTasks, isLoading: isTasksLoading } = useCollection<Task>(tasksQuery);
-  const tasks = firestoreTasks || [];
+  const tasks = useMemo(() => firestoreTasks || [], [firestoreTasks]);
 
   // Automatic Tab Synchronization Logic
   useEffect(() => {
@@ -91,7 +93,68 @@ export function useTasks() {
     });
   }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
-  const filteredAndSortedTasks = useMemo(() => {
+  // Stats and Filtering Memoization
+  const stats = useMemo(() => {
+    if (!todayStr) return { tabCounts: {}, userCounts: {}, userStreaks: {} };
+
+    const tabCounts: Record<string, number> = {};
+    const userCounts: Record<string, number> = {};
+    const userStreaks: Record<string, number> = {};
+
+    USER_OPTIONS.forEach(userName => {
+      // 1. Tab Counts for active user
+      if (userName === activeUser) {
+        ['Today', 'Tomorrow', 'Later'].forEach(tab => {
+          tabCounts[tab] = tasks.filter(t => 
+            t.owner === activeUser && 
+            t.tab === tab && 
+            t.status !== 'Completed' && 
+            t.status !== 'Awaiting Information'
+          ).length;
+        });
+      }
+
+      // 2. Total Outstanding User Counts
+      userCounts[userName] = tasks.filter(t => 
+        t.owner === userName && 
+        t.status !== 'Completed' && 
+        t.status !== 'Awaiting Information'
+      ).length;
+
+      // 3. Streak Calculation
+      let streak = 0;
+      const today = new Date();
+      const startDate = parseISO(STREAK_START_DATE);
+      let offset = 1; 
+      let daysChecked = 0;
+      const MAX_LOOKBACK = 60;
+      
+      while (daysChecked < MAX_LOOKBACK) {
+        const checkDate = subDays(today, offset);
+        if (isBefore(checkDate, startDate)) break;
+        const dayOfWeek = getDay(checkDate);
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        if (!isWeekend) {
+          const checkDateStr = format(checkDate, 'yyyy-MM-dd');
+          const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
+          const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
+          if (isDaySuccessful) streak++;
+          else break;
+        }
+        offset++;
+        daysChecked++;
+      }
+      
+      const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
+      const todayActioned = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
+      if (todayActioned) streak++;
+      userStreaks[userName] = streak;
+    });
+
+    return { tabCounts, userCounts, userStreaks };
+  }, [tasks, activeUser, todayStr, tomorrowStr]);
+
+  const filteredTasks = useMemo(() => {
     const seen = new Set<string>();
 
     return tasks
@@ -125,32 +188,6 @@ export function useTasks() {
       });
   }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, tomorrowStr, showPastCompleted]);
 
-  const getNewTaskTemplate = (): Task | null => {
-    if (!todayStr || !user) return null;
-    const now = new Date();
-    let defaultDueDate = todayStr;
-    if (activeTab === 'Tomorrow') defaultDueDate = tomorrowStr;
-    else if (activeTab === 'Later') defaultDueDate = format(addDays(now, 2), 'yyyy-MM-dd');
-    
-    return {
-      id: 'new',
-      name: '',
-      status: 'Incomplete',
-      priority: 'Medium',
-      dueDate: defaultDueDate,
-      notes: '',
-      tab: activeTab,
-      owner: activeUser,
-      createdBy: activeUser,
-      recurrence: 'None',
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      userId: user.uid,
-      startTime: '',
-      endTime: ''
-    };
-  };
-
   const updateTask = (updatedTask: Task) => {
     if (!db || !user || !tasksQuery) return;
     const now = new Date().toISOString();
@@ -165,12 +202,6 @@ export function useTasks() {
         updatedAt: now 
       });
     }
-  };
-
-  const deleteTask = (id: string) => {
-    if (!db || !user) return;
-    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
-    deleteDocumentNonBlocking(taskRef);
   };
 
   const moveTaskStatus = (id: string, newStatus: TaskStatus) => {
@@ -217,7 +248,6 @@ export function useTasks() {
     const dayOfWeek = getDay(currentDueDate);
     
     let nextDate = addDays(currentDueDate, 1);
-    // WEEKEND LOGIC: Friday (5) or Saturday (6) moves jump to Monday.
     if (dayOfWeek === 5) nextDate = addDays(currentDueDate, 3);
     else if (dayOfWeek === 6) nextDate = addDays(currentDueDate, 2);
     
@@ -234,9 +264,18 @@ export function useTasks() {
     });
   };
 
+  const deleteTask = (id: string) => {
+    if (!db || !user) return;
+    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
+    deleteDocumentNonBlocking(taskRef);
+  };
+
   return {
     tasks,
-    filteredTasks: filteredAndSortedTasks,
+    filteredTasks,
+    tabCounts: stats.tabCounts,
+    userCounts: stats.userCounts,
+    userStreaks: stats.userStreaks,
     isLoaded: !isUserLoading && !isTasksLoading && todayStr !== '',
     searchQuery,
     setSearchQuery,
@@ -248,12 +287,13 @@ export function useTasks() {
     setActiveUser,
     viewMode,
     setViewMode,
-    getNewTaskTemplate,
     updateTask,
     deleteTask,
     moveTaskStatus,
     moveTaskDate,
     showPastCompleted,
-    setShowPastCompleted
+    setShowPastCompleted,
+    todayStr,
+    tomorrowStr
   };
 }
