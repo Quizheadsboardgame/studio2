@@ -1,5 +1,5 @@
 
-export type TaskStatus = 'Incomplete' | 'In Progress' | 'Needs Action' | 'Completed';
+export type TaskStatus = 'Incomplete' | 'Awaiting Information' | 'Follow up Required' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskTab = 'Today' | 'Tomorrow' | 'Later';
 export type TaskUser = 'Owen' | 'Lucy' | 'Nick';
@@ -23,7 +23,7 @@ export interface Task {
   userId: string;
 }
 
-export const STATUS_OPTIONS: TaskStatus[] = ['Incomplete', 'In Progress', 'Needs Action', 'Completed'];
+export const STATUS_OPTIONS: TaskStatus[] = ['Incomplete', 'Awaiting Information', 'Follow up Required', 'Completed'];
 export const PRIORITY_OPTIONS: TaskPriority[] = ['High', 'Medium', 'Low'];
 export const TAB_OPTIONS: TaskTab[] = ['Today', 'Tomorrow', 'Later'];
 export const USER_OPTIONS: TaskUser[] = ['Owen', 'Lucy', 'Nick'];

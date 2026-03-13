@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Repeat, Clock, CheckCircle2, UserPen } from "lucide-react";
+import { Repeat, Clock, CheckCircle2, UserPen, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TaskDialogProps {
@@ -44,6 +44,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
   };
 
   const isCompleted = formData.status === 'Completed';
+  const isAwaiting = formData.status === 'Awaiting Information';
   const creatorTheme = formData.createdBy && formData.createdBy !== formData.owner 
     ? USER_THEMES[formData.createdBy as keyof typeof USER_THEMES] 
     : '';
@@ -53,7 +54,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
       <DialogContent className="sm:max-w-[425px] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isCompleted ? <CheckCircle2 className="text-green-500 h-5 w-5" /> : <Clock className="text-blue-500 h-5 w-5" />}
+            {isCompleted ? <CheckCircle2 className="text-green-500 h-5 w-5" /> : isAwaiting ? <Info className="text-orange-500 h-5 w-5" /> : <Clock className="text-blue-500 h-5 w-5" />}
             {task?.id === 'new' ? 'Create New Task' : 'Task Details'}
           </DialogTitle>
         </DialogHeader>

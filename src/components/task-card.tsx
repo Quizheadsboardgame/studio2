@@ -6,7 +6,7 @@ import { Task } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check, CalendarPlus, UserPen } from "lucide-react";
+import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check, CalendarPlus, UserPen, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
@@ -52,11 +52,13 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
 
   const statusIcon = task.status === 'Completed' 
     ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-    : task.status === 'In Progress'
-      ? <Clock className="w-4 h-4 text-orange-500 animate-pulse" />
-      : isHighPriorityDueToday 
-        ? <AlertCircle className="w-4 h-4 text-destructive animate-pulse" />
-        : <Clock className="w-4 h-4 text-muted-foreground" />;
+    : task.status === 'Awaiting Information'
+      ? <Info className="w-4 h-4 text-orange-500 animate-pulse" />
+      : task.status === 'Follow up Required'
+        ? <AlertCircle className="w-4 h-4 text-blue-500" />
+        : isHighPriorityDueToday 
+          ? <AlertCircle className="w-4 h-4 text-destructive animate-pulse" />
+          : <Clock className="w-4 h-4 text-muted-foreground" />;
 
   const handleDragStart = (e: React.DragEvent) => {
     if (!isBoard) return;
@@ -166,9 +168,9 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
           isBoard && "cursor-grab active:cursor-grabbing",
           task.status === 'Completed' 
             ? "border-green-200 bg-green-50/50 dark:bg-green-950/10 opacity-75" 
-            : task.status === 'In Progress'
+            : task.status === 'Awaiting Information'
               ? "border-orange-200 bg-orange-50/50 dark:bg-orange-950/10 shadow-sm"
-              : isHighPriorityDueToday 
+              : isHighPriorityDueToday && task.status !== 'Awaiting Information'
                 ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
                 : "border-transparent"
         )}
@@ -182,7 +184,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                   <h3 className={cn(
                     "text-sm font-semibold truncate",
                     task.status === 'Completed' && "line-through text-muted-foreground",
-                    isHighPriorityDueToday && task.status !== 'In Progress' && "text-destructive"
+                    isHighPriorityDueToday && task.status !== 'Awaiting Information' && "text-destructive"
                   )}>
                     {task.name}
                   </h3>
@@ -236,7 +238,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
               </Badge>
               <div className={cn(
                 "flex items-center text-[10px]",
-                isHighPriorityDueToday && task.status !== 'In Progress' ? "text-destructive font-bold" : "text-muted-foreground"
+                isHighPriorityDueToday && task.status !== 'Awaiting Information' ? "text-destructive font-bold" : "text-muted-foreground"
               )}>
                 <Calendar className="w-3 h-3 mr-1" />
                 {formattedDate} {timeDisplay && `at ${timeDisplay}`} {isHighPriorityDueToday && "(TODAY)"}

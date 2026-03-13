@@ -83,21 +83,21 @@ export default function Home() {
   };
 
   const getTabOutstandingCount = (tab: TaskTab) => {
-    // Exclude 'Completed' and 'In Progress' from the "to do" count
+    // Exclude 'Completed' and 'Awaiting Information' from the "to do" count
     return tasks.filter(t => 
       t.owner === activeUser && 
       t.tab === tab && 
       t.status !== 'Completed' && 
-      t.status !== 'In Progress'
+      t.status !== 'Awaiting Information'
     ).length;
   };
 
   const getUserOutstandingCount = (userName: TaskUser) => {
-    // Exclude 'Completed' and 'In Progress' from the "to do" count
+    // Exclude 'Completed' and 'Awaiting Information' from the "to do" count
     return tasks.filter(t => 
       t.owner === userName && 
       t.status !== 'Completed' && 
-      t.status !== 'In Progress'
+      t.status !== 'Awaiting Information'
     ).length;
   };
 
@@ -117,8 +117,8 @@ export default function Home() {
       if (!isWeekend) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
-        // Streak is preserved if no tasks were scheduled OR all tasks were actioned (Completed or In Progress)
-        const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'In Progress');
+        // Streak is preserved if no tasks were scheduled OR all tasks were actioned (Completed or Awaiting Information)
+        const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
         if (isDaySuccessful) streak++;
         else break;
       }
@@ -128,7 +128,7 @@ export default function Home() {
     const todayStr = format(today, 'yyyy-MM-dd');
     const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
     // Today counts toward the streak if it's currently 100% actioned
-    const todayActioned = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed' || t.status === 'In Progress');
+    const todayActioned = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
     if (todayActioned) streak++;
     return streak;
   };

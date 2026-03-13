@@ -16,8 +16,8 @@ interface TaskBoardViewProps {
 export function TaskBoardView({ tasks, onEdit, onDelete, onStatusChange, onMoveDate }: TaskBoardViewProps) {
   const columns: Record<TaskStatus, Task[]> = {
     'Incomplete': [],
-    'In Progress': [],
-    'Needs Action': [],
+    'Awaiting Information': [],
+    'Follow up Required': [],
     'Completed': []
   };
 

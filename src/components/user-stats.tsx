@@ -56,13 +56,13 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
     // 1. Calculate Today's completion
     const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
     
-    // A task is considered "done" for percentage/streak purposes if it's Completed OR In Progress (per user request)
-    const actionedCount = userTasksForToday.filter((t) => t.status === "Completed" || t.status === "In Progress").length;
+    // A task is considered "done" for percentage/streak purposes if it's Completed OR Awaiting Information
+    const actionedCount = userTasksForToday.filter((t) => t.status === "Completed" || t.status === "Awaiting Information").length;
     const total = userTasksForToday.length;
     const percentage = total > 0 ? Math.round((actionedCount / total) * 100) : 100;
 
-    // "To Do" count strictly excludes both Completed and In Progress
-    const remaining = userTasksForToday.filter((t) => t.status !== "Completed" && t.status !== "In Progress").length;
+    // "To Do" count strictly excludes both Completed and Awaiting Information
+    const remaining = userTasksForToday.filter((t) => t.status !== "Completed" && t.status !== "Awaiting Information").length;
 
     // 2. Calculate Streak (Starts from yesterday, ignores weekends, stops at hard start date)
     let streak = 0;
@@ -87,8 +87,8 @@ export function UserStats({ tasks, activeUser }: UserStatsProps) {
         const checkDateStr = format(checkDate, 'yyyy-MM-dd');
         const dayTasks = tasks.filter(t => t.owner === user && t.dueDate === checkDateStr);
         
-        // Success if no tasks scheduled OR all tasks are "Actioned" (Completed/In Progress)
-        const isDayDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'In Progress');
+        // Success if no tasks scheduled OR all tasks are "Actioned" (Completed/Awaiting Information)
+        const isDayDone = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
         
         if (isDayDone) {
           streak++;
