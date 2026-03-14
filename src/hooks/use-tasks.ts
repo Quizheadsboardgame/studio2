@@ -42,6 +42,7 @@ export function useTasks() {
     
     setTodayStr(format(today, 'yyyy-MM-dd'));
     
+    // Logic: Tomorrow should be the next working day
     let nextWorkingDay = addDays(today, 1);
     if (dayOfWeek === 5) { // Friday -> Monday
       nextWorkingDay = addDays(today, 3);
@@ -97,16 +98,24 @@ export function useTasks() {
   const stats = useMemo(() => {
     if (!todayStr) return { tabCounts: {}, userCounts: {}, userStreaks: {} };
 
+    // Group tasks by owner and date for performance
+    const tasksByUser: Record<string, Task[]> = {};
+    USER_OPTIONS.forEach(u => tasksByUser[u] = []);
+    tasks.forEach(t => {
+      if (tasksByUser[t.owner]) tasksByUser[t.owner].push(t);
+    });
+
     const tabCounts: Record<string, number> = {};
     const userCounts: Record<string, number> = {};
     const userStreaks: Record<string, number> = {};
 
     USER_OPTIONS.forEach(userName => {
-      // 1. Tab Counts for active user
+      const userTasks = tasksByUser[userName];
+      
+      // 1. Tab Counts for active user (only show outstanding tasks)
       if (userName === activeUser) {
         ['Today', 'Tomorrow', 'Later'].forEach(tab => {
-          tabCounts[tab] = tasks.filter(t => 
-            t.owner === activeUser && 
+          tabCounts[tab] = userTasks.filter(t => 
             t.tab === tab && 
             t.status !== 'Completed' && 
             t.status !== 'Awaiting Information'
@@ -115,13 +124,18 @@ export function useTasks() {
       }
 
       // 2. Total Outstanding User Counts
-      userCounts[userName] = tasks.filter(t => 
-        t.owner === userName && 
+      userCounts[userName] = userTasks.filter(t => 
         t.status !== 'Completed' && 
         t.status !== 'Awaiting Information'
       ).length;
 
-      // 3. Streak Calculation
+      // 3. Streak Calculation (Optimized)
+      const tasksByDate: Record<string, Task[]> = {};
+      userTasks.forEach(t => {
+        if (!tasksByDate[t.dueDate]) tasksByDate[t.dueDate] = [];
+        tasksByDate[t.dueDate].push(t);
+      });
+
       let streak = 0;
       const today = new Date();
       const startDate = parseISO(STREAK_START_DATE);
@@ -136,7 +150,7 @@ export function useTasks() {
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         if (!isWeekend) {
           const checkDateStr = format(checkDate, 'yyyy-MM-dd');
-          const dayTasks = tasks.filter(t => t.owner === userName && t.dueDate === checkDateStr);
+          const dayTasks = tasksByDate[checkDateStr] || [];
           const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
           if (isDaySuccessful) streak++;
           else break;
@@ -145,7 +159,7 @@ export function useTasks() {
         daysChecked++;
       }
       
-      const todayTasks = tasks.filter(t => t.owner === userName && t.dueDate === todayStr);
+      const todayTasks = tasksByDate[todayStr] || [];
       const todayActioned = todayTasks.length > 0 && todayTasks.every(t => t.status === 'Completed' || t.status === 'Awaiting Information');
       if (todayActioned) streak++;
       userStreaks[userName] = streak;
@@ -193,7 +207,8 @@ export function useTasks() {
     const now = new Date().toISOString();
 
     if (updatedTask.id === 'new') {
-      const { id, ...newTaskData } = { ...updatedTask, updatedAt: now };
+      const { id: _, ...newTaskData } = { ...updatedTask, updatedAt: now };
+      // @ts-ignore
       addDocumentNonBlocking(tasksQuery, newTaskData);
     } else {
       const taskRef = doc(db, 'users', user.uid, 'tasks', updatedTask.id);
@@ -233,6 +248,7 @@ export function useTasks() {
       );
       if (!alreadyExists) {
         const { id: _, ...dataForNewTask } = { ...task, status: 'Incomplete', dueDate: nextDueDateStr, createdAt: now, updatedAt: now };
+        // @ts-ignore
         addDocumentNonBlocking(tasksQuery, dataForNewTask);
       }
     }

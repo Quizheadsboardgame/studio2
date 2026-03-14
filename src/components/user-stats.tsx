@@ -7,12 +7,12 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Flame, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 
 interface UserStatsProps {
   tasks: Task[];
   activeUser: TaskUser;
   streaks: Record<string, number>;
+  todayStr: string;
 }
 
 const USER_COLORS = {
@@ -42,13 +42,7 @@ const USER_COLORS = {
   }
 };
 
-export function UserStats({ tasks, activeUser, streaks }: UserStatsProps) {
-  const [todayStr, setTodayStr] = React.useState<string>("");
-
-  React.useEffect(() => {
-    setTodayStr(format(new Date(), 'yyyy-MM-dd'));
-  }, []);
-
+export function UserStats({ tasks, activeUser, streaks, todayStr }: UserStatsProps) {
   const getStats = React.useCallback((user: TaskUser) => {
     if (!todayStr) return { completed: 0, total: 0, percentage: 100, remaining: 0 };
     

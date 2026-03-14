@@ -78,7 +78,7 @@ export default function Home() {
   }, [isDarkMode]);
 
   const handleCreateNewTask = () => {
-    if (!user) return;
+    if (!user || !todayStr) return;
     
     let defaultDueDate = todayStr;
     if (activeTab === 'Tomorrow') defaultDueDate = tomorrowStr;
@@ -172,7 +172,7 @@ export default function Home() {
           </div>
         </header>
 
-        <UserStats tasks={tasks} activeUser={activeUser} streaks={userStreaks} />
+        <UserStats tasks={tasks} activeUser={activeUser} streaks={userStreaks} todayStr={todayStr} />
 
         <div className="flex flex-col items-center mb-8">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-lg">
