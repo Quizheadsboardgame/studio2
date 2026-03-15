@@ -53,11 +53,11 @@ export function useTasks() {
     
     setTodayStr(format(today, 'yyyy-MM-dd'));
     
-    // Weekend-aware Tomorrow Logic
+    // Weekend-aware Tomorrow Logic (Fri -> Mon)
     let nextWorkingDay = addDays(today, 1);
-    if (dayOfWeek === 5) nextWorkingDay = addDays(today, 3); // Fri -> Mon
-    else if (dayOfWeek === 6) nextWorkingDay = addDays(today, 2); // Sat -> Mon
-    else if (dayOfWeek === 0) nextWorkingDay = addDays(today, 1); // Sun -> Mon
+    if (dayOfWeek === 5) nextWorkingDay = addDays(today, 3);
+    else if (dayOfWeek === 6) nextWorkingDay = addDays(today, 2);
+    else if (dayOfWeek === 0) nextWorkingDay = addDays(today, 1);
     
     setTomorrowStr(format(nextWorkingDay, 'yyyy-MM-dd'));
   }, []);
