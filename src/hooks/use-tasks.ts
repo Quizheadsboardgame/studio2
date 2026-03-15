@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Task, TaskStatus, TaskTab, TaskUser, TaskRecurrence, PRIORITY_ORDER, STATUS_OPTIONS, USER_OPTIONS } from '@/types/task';
+import { Task, TaskStatus, TaskTab, TaskUser, PRIORITY_ORDER, USER_OPTIONS } from '@/types/task';
 import { 
   useUser, 
   useFirestore, 
@@ -20,14 +20,14 @@ import { addDays, addWeeks, addMonths, parseISO, format, getDay, subDays, isBefo
 const STREAK_START_DATE = '2026-03-11';
 
 /** 
- * Helper to identify if a task is "Actioned" (done/in progress for today).
- * As per request: "Awaiting Information" counts as progress/actioned.
+ * Helper to identify if a task is "Actioned" (done or progress made for today).
+ * Per request: "Awaiting Information" counts as progress/actioned.
  */
 const isActioned = (status: TaskStatus) => status === 'Completed' || status === 'Awaiting Information';
 
 /** 
  * Helper to identify if a task is "Outstanding" (needs to be started).
- * As per request: "Awaiting Information" is NOT outstanding/to-do.
+ * Per request: "Awaiting Information" is NOT outstanding.
  */
 const isOutstanding = (status: TaskStatus) => status === 'Incomplete' || status === 'Follow up Required';
 
@@ -48,26 +48,20 @@ export function useTasks() {
 
   const syncRef = useRef<Set<string>>(new Set());
 
-  // Initialize dates correctly to avoid hydration mismatch
   useEffect(() => {
     const today = new Date();
     const dayOfWeek = getDay(today);
     
     setTodayStr(format(today, 'yyyy-MM-dd'));
     
-    // Weekend-aware Tomorrow: Friday -> Monday, Saturday -> Monday, Sunday -> Monday
+    // Weekend-aware Tomorrow Logic
     let nextWorkingDay = addDays(today, 1);
-    if (dayOfWeek === 5) { // Friday -> Monday
-      nextWorkingDay = addDays(today, 3);
-    } else if (dayOfWeek === 6) { // Saturday -> Monday
-      nextWorkingDay = addDays(today, 2);
-    } else if (dayOfWeek === 0) { // Sunday -> Monday
-      nextWorkingDay = addDays(today, 1);
-    }
+    if (dayOfWeek === 5) nextWorkingDay = addDays(today, 3); // Fri -> Mon
+    else if (dayOfWeek === 6) nextWorkingDay = addDays(today, 2); // Sat -> Mon
+    
     setTomorrowStr(format(nextWorkingDay, 'yyyy-MM-dd'));
   }, []);
 
-  // Auth check
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
@@ -82,7 +76,7 @@ export function useTasks() {
   const { data: firestoreTasks, isLoading: isTasksLoading } = useCollection<Task>(tasksQuery);
   const tasks = useMemo(() => firestoreTasks || [], [firestoreTasks]);
 
-  // Automatic Tab Synchronization Logic
+  // Sync Logic: Ensure tasks are in the right tab based on their date
   useEffect(() => {
     if (!todayStr || !tomorrowStr || !user || !db || isTasksLoading || tasks.length === 0) return;
 
@@ -91,24 +85,18 @@ export function useTasks() {
       if (syncRef.current.has(syncKey)) return;
 
       let correctTab: TaskTab = 'Later';
-      if (task.dueDate <= todayStr) {
-        correctTab = 'Today';
-      } else if (task.dueDate === tomorrowStr) {
-        correctTab = 'Tomorrow';
-      }
+      if (task.dueDate <= todayStr) correctTab = 'Today';
+      else if (task.dueDate === tomorrowStr) correctTab = 'Tomorrow';
 
       if (task.tab !== correctTab) {
         syncRef.current.add(syncKey);
         const taskRef = doc(db, 'users', user.uid, 'tasks', task.id);
-        updateDocumentNonBlocking(taskRef, { 
-          tab: correctTab, 
-          updatedAt: new Date().toISOString() 
-        });
+        updateDocumentNonBlocking(taskRef, { tab: correctTab, updatedAt: new Date().toISOString() });
       }
     });
   }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
-  // Consolidated Stats calculation
+  // Consolidated Stats and Streak Calculation
   const stats = useMemo(() => {
     if (!todayStr) return { tabCounts: {}, userCounts: {}, userStreaks: {}, userProgress: {} };
 
@@ -120,18 +108,17 @@ export function useTasks() {
     USER_OPTIONS.forEach(userName => {
       const userTasks = tasks.filter(t => t.owner === userName);
       
-      // 1. Tab Counts for active user (only show outstanding tasks)
+      // Tab badges for current user (only outstanding)
       if (userName === activeUser) {
         ['Today', 'Tomorrow', 'Later'].forEach(tab => {
           tabCounts[tab] = userTasks.filter(t => t.tab === tab && isOutstanding(t.status)).length;
         });
       }
 
-      // 2. Total Outstanding User Counts (across all tabs)
+      // Overall outstanding count
       userCounts[userName] = userTasks.filter(t => isOutstanding(t.status)).length;
 
-      // 3. Daily Progress (Based on the 'Today' tab to include overdue items)
-      // Percentage calculation includes "Awaiting Information" as completed.
+      // Progress calculation for the "Today" view
       const todayTabTasks = userTasks.filter(t => t.tab === 'Today');
       const actionedCount = todayTabTasks.filter(t => isActioned(t.status)).length;
       const total = todayTabTasks.length;
@@ -142,36 +129,30 @@ export function useTasks() {
         remaining: todayTabTasks.filter(t => isOutstanding(t.status)).length
       };
 
-      // 4. Streak Calculation
+      // Streak calculation (skipping weekends)
       let streak = 0;
       const startDate = parseISO(STREAK_START_DATE);
       const todayObj = startOfDay(new Date());
-      let offset = 1; 
+      let offset = 1;
       let daysChecked = 0;
-      const MAX_LOOKBACK = 90;
       
-      while (daysChecked < MAX_LOOKBACK) {
+      while (daysChecked < 90) {
         const checkDate = subDays(todayObj, offset);
         if (isBefore(checkDate, startDate)) break;
         
         const dayOfWeek = getDay(checkDate);
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        
-        if (!isWeekend) {
-          const checkDateStr = format(checkDate, 'yyyy-MM-dd');
-          const dayTasks = userTasks.filter(t => t.dueDate === checkDateStr);
-          // A day is successful if all tasks for that date were actioned
-          const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => isActioned(t.status));
-          
-          if (isDaySuccessful) streak++;
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip weekends
+          const dateStr = format(checkDate, 'yyyy-MM-dd');
+          const dayTasks = userTasks.filter(t => t.dueDate === dateStr);
+          if (dayTasks.length === 0 || dayTasks.every(t => isActioned(t.status))) streak++;
           else break;
         }
         offset++;
         daysChecked++;
       }
       
-      // Add current day if all today's tasks are actioned
-      if (userProgress[userName].total > 0 && userProgress[userName].total === userProgress[userName].completed) {
+      // Check if today is also actioned
+      if (userProgress[userName].total > 0 && userProgress[userName].remaining === 0) {
         streak++;
       }
       userStreaks[userName] = streak;
@@ -183,47 +164,35 @@ export function useTasks() {
   const filteredTasks = useMemo(() => {
     return tasks
       .filter((task) => {
-        // Hide past completed tasks unless toggled on
-        const isPastCompleted = task.status === 'Completed' && task.dueDate < todayStr;
-        if (!showPastCompleted && isPastCompleted) return false;
-
-        const matchesSearch = task.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                             (task.notes && task.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+        if (!showPastCompleted && task.status === 'Completed' && task.dueDate < todayStr) return false;
+        
+        const matchesSearch = task.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
-        
-        let matchesTab = task.tab === activeTab;
-        if (viewMode === 'diary') matchesTab = true;
-        
+        const matchesTab = viewMode === 'diary' || task.tab === activeTab;
         const matchesUser = task.owner === activeUser;
+        
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
-        // Sort actioned tasks to the bottom
-        const aStatusScore = isActioned(a.status) ? 1 : 0;
-        const bStatusScore = isActioned(b.status) ? 1 : 0;
-        if (aStatusScore !== bStatusScore) return aStatusScore - bStatusScore;
-
+        const aScore = isActioned(a.status) ? 1 : 0;
+        const bScore = isActioned(b.status) ? 1 : 0;
+        if (aScore !== bScore) return aScore - bScore;
+        
         const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
         if (priorityDiff !== 0) return priorityDiff;
-
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        
+        return a.dueDate.localeCompare(b.dueDate);
       });
   }, [tasks, searchQuery, statusFilter, activeTab, activeUser, viewMode, todayStr, showPastCompleted]);
 
   const updateTask = (updatedTask: Task) => {
     if (!db || !user || !tasksQuery) return;
     const now = new Date().toISOString();
-
     if (updatedTask.id === 'new') {
-      const { id: _, ...newTaskData } = { ...updatedTask, updatedAt: now };
-      // @ts-ignore
-      addDocumentNonBlocking(tasksQuery, newTaskData);
+      const { id: _, ...data } = { ...updatedTask, updatedAt: now };
+      addDocumentNonBlocking(tasksQuery, data);
     } else {
-      const taskRef = doc(db, 'users', user.uid, 'tasks', updatedTask.id);
-      updateDocumentNonBlocking(taskRef, { 
-        ...updatedTask, 
-        updatedAt: now 
-      });
+      updateDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', updatedTask.id), { ...updatedTask, updatedAt: now });
     }
   };
 
@@ -231,98 +200,63 @@ export function useTasks() {
     if (!db || !user) return;
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
     
-    // Recurrence logic
+    // Recurrence logic for completion
     if (newStatus === 'Completed' && task.recurrence && task.recurrence !== 'None') {
       let nextDate: Date;
-      const currentDueDate = parseISO(task.dueDate);
+      const current = parseISO(task.dueDate);
       switch (task.recurrence) {
-        case 'Daily': nextDate = addDays(currentDueDate, 1); break;
+        case 'Daily': nextDate = addDays(current, 1); break;
         case 'Monday to Friday':
-          const day = getDay(currentDueDate);
-          if (day === 5) nextDate = addDays(currentDueDate, 3);
-          else if (day === 6) nextDate = addDays(currentDueDate, 2);
-          else nextDate = addDays(currentDueDate, 1);
+          const d = getDay(current);
+          nextDate = addDays(current, d === 5 ? 3 : d === 6 ? 2 : 1);
           break;
-        case 'Weekly': nextDate = addWeeks(currentDueDate, 1); break;
-        case 'Monthly': nextDate = addMonths(currentDueDate, 1); break;
-        default: nextDate = currentDueDate;
+        case 'Weekly': nextDate = addWeeks(current, 1); break;
+        case 'Monthly': nextDate = addMonths(current, 1); break;
+        default: nextDate = current;
       }
-      const nextDueDateStr = format(nextDate, 'yyyy-MM-dd');
-      const now = new Date().toISOString();
-      
-      const alreadyExists = tasks.some(t => 
-        t.name.trim().toLowerCase() === task.name.trim().toLowerCase() && 
-        t.dueDate === nextDueDateStr && t.owner === task.owner && t.status !== 'Completed'
-      );
-      
-      if (!alreadyExists) {
-        const { id: _, ...dataForNewTask } = { ...task, status: 'Incomplete', dueDate: nextDueDateStr, createdAt: now, updatedAt: now };
-        // @ts-ignore
-        addDocumentNonBlocking(tasksQuery, dataForNewTask);
+      const nextDateStr = format(nextDate, 'yyyy-MM-dd');
+      if (!tasks.some(t => t.name === task.name && t.dueDate === nextDateStr && t.owner === task.owner && t.status !== 'Completed')) {
+        const { id: _, ...newData } = { ...task, status: 'Incomplete', dueDate: nextDateStr, createdAt: new Date().toISOString() };
+        addDocumentNonBlocking(tasksQuery!, newData);
       }
     }
-    updateDocumentNonBlocking(taskRef, { status: newStatus, updatedAt: new Date().toISOString() });
+    updateDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', id), { status: newStatus, updatedAt: new Date().toISOString() });
   };
 
   const moveTaskDate = (id: string) => {
     if (!db || !user) return;
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-    
-    const currentDueDate = parseISO(task.dueDate);
-    const dayOfWeek = getDay(currentDueDate);
-    
-    // Weekend-aware Jump: Fri -> Mon, Sat -> Mon
-    let nextDate = addDays(currentDueDate, 1);
-    if (dayOfWeek === 5) nextDate = addDays(currentDueDate, 3);
-    else if (dayOfWeek === 6) nextDate = addDays(currentDueDate, 2);
-    
-    const nextDateStr = format(nextDate, 'yyyy-MM-dd');
+    const current = parseISO(task.dueDate);
+    const d = getDay(current);
+    const next = addDays(current, d === 5 ? 3 : d === 6 ? 2 : 1);
+    const nextStr = format(next, 'yyyy-MM-dd');
     let newTab: TaskTab = 'Later';
-    if (nextDateStr === todayStr) newTab = 'Today';
-    else if (nextDateStr === tomorrowStr) newTab = 'Tomorrow';
-    
-    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
-    updateDocumentNonBlocking(taskRef, { 
-      dueDate: nextDateStr, 
-      tab: newTab, 
-      updatedAt: new Date().toISOString() 
-    });
+    if (nextStr === todayStr) newTab = 'Today';
+    else if (nextStr === tomorrowStr) newTab = 'Tomorrow';
+    updateDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', id), { dueDate: nextStr, tab: newTab, updatedAt: new Date().toISOString() });
   };
 
   const deleteTask = (id: string) => {
     if (!db || !user) return;
-    const taskRef = doc(db, 'users', user.uid, 'tasks', id);
-    deleteDocumentNonBlocking(taskRef);
+    deleteDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', id));
   };
 
   return {
-    tasks,
-    filteredTasks,
+    tasks, filteredTasks,
     tabCounts: stats.tabCounts,
     userCounts: stats.userCounts,
     userStreaks: stats.userStreaks,
     userProgress: stats.userProgress,
     isLoaded: !isUserLoading && !isTasksLoading && todayStr !== '',
-    searchQuery,
-    setSearchQuery,
-    statusFilter,
-    setStatusFilter,
-    activeTab,
-    setActiveTab,
-    activeUser,
-    setActiveUser,
-    viewMode,
-    setViewMode,
-    updateTask,
-    deleteTask,
-    moveTaskStatus,
-    moveTaskDate,
-    showPastCompleted,
-    setShowPastCompleted,
-    todayStr,
-    tomorrowStr
+    searchQuery, setSearchQuery,
+    statusFilter, setStatusFilter,
+    activeTab, setActiveTab,
+    activeUser, setActiveUser,
+    viewMode, setViewMode,
+    updateTask, deleteTask, moveTaskStatus, moveTaskDate,
+    showPastCompleted, setShowPastCompleted,
+    todayStr, tomorrowStr
   };
 }
