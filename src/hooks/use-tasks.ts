@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -21,13 +20,13 @@ const STREAK_START_DATE = '2026-03-11';
 
 /** 
  * Helper to identify if a task is "Actioned" (done or progress made for today).
- * Per request: "Awaiting Information" counts as progress/actioned.
+ * "Awaiting Information" counts as progress/actioned.
  */
 const isActioned = (status: TaskStatus) => status === 'Completed' || status === 'Awaiting Information';
 
 /** 
  * Helper to identify if a task is "Outstanding" (needs to be started).
- * Per request: "Awaiting Information" is NOT outstanding.
+ * "Awaiting Information" is NOT outstanding.
  */
 const isOutstanding = (status: TaskStatus) => status === 'Incomplete' || status === 'Follow up Required';
 
@@ -58,6 +57,7 @@ export function useTasks() {
     let nextWorkingDay = addDays(today, 1);
     if (dayOfWeek === 5) nextWorkingDay = addDays(today, 3); // Fri -> Mon
     else if (dayOfWeek === 6) nextWorkingDay = addDays(today, 2); // Sat -> Mon
+    else if (dayOfWeek === 0) nextWorkingDay = addDays(today, 1); // Sun -> Mon
     
     setTomorrowStr(format(nextWorkingDay, 'yyyy-MM-dd'));
   }, []);
@@ -144,14 +144,17 @@ export function useTasks() {
         if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip weekends
           const dateStr = format(checkDate, 'yyyy-MM-dd');
           const dayTasks = userTasks.filter(t => t.dueDate === dateStr);
-          if (dayTasks.length === 0 || dayTasks.every(t => isActioned(t.status))) streak++;
-          else break;
+          if (dayTasks.length === 0 || dayTasks.every(t => isActioned(t.status))) {
+            streak++;
+          } else {
+            break;
+          }
         }
         offset++;
         daysChecked++;
       }
       
-      // Check if today is also actioned
+      // If all of today's tasks are actioned, increase streak
       if (userProgress[userName].total > 0 && userProgress[userName].remaining === 0) {
         streak++;
       }

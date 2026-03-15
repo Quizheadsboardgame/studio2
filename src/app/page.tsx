@@ -38,7 +38,6 @@ export default function Home() {
   const { user } = useUser();
   const auth = useAuth();
   const {
-    tasks,
     filteredTasks,
     tabCounts,
     userCounts,
