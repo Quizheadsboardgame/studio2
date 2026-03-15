@@ -1,18 +1,16 @@
-
 "use client";
 
 import * as React from "react";
-import { Task, TaskUser, USER_OPTIONS } from "@/types/task";
+import { TaskUser, USER_OPTIONS } from "@/types/task";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Flame, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UserStatsProps {
-  tasks: Task[];
   activeUser: TaskUser;
   streaks: Record<string, number>;
-  todayStr: string;
+  progress: Record<string, { completed: number, total: number, percentage: number, remaining: number }>;
 }
 
 const USER_COLORS = {
@@ -42,41 +40,20 @@ const USER_COLORS = {
   }
 };
 
-export function UserStats({ tasks, activeUser, streaks, todayStr }: UserStatsProps) {
-  const getStats = React.useCallback((user: TaskUser) => {
-    if (!todayStr) return { completed: 0, total: 0, percentage: 100, remaining: 0 };
-    
-    const userTasksForToday = tasks.filter((t) => t.owner === user && t.dueDate === todayStr);
-    
-    // Actioned tasks = Completed OR Awaiting Information
-    const actionedCount = userTasksForToday.filter((t) => 
-      t.status === "Completed" || t.status === "Awaiting Information"
-    ).length;
-    
-    const total = userTasksForToday.length;
-    const percentage = total > 0 ? Math.round((actionedCount / total) * 100) : 100;
-
-    // Remaining tasks = Incomplete OR Follow up Required
-    const remaining = userTasksForToday.filter((t) => 
-      t.status === "Incomplete" || t.status === "Follow up Required"
-    ).length;
-
-    return { completed: actionedCount, total, percentage, remaining };
-  }, [tasks, todayStr]);
-
+export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
   const allUserStats = React.useMemo(() => {
     return USER_OPTIONS.map((user) => ({
       name: user,
-      ...getStats(user),
+      ...(progress[user] || { completed: 0, total: 0, percentage: 100, remaining: 0 }),
       streak: streaks[user] || 0
     })).sort((a, b) => {
       if (a.total > 0 && b.total === 0) return -1;
       if (a.total === 0 && b.total > 0) return 1;
       return b.percentage - a.percentage;
     });
-  }, [getStats, streaks]);
+  }, [progress, streaks]);
 
-  const activeStats = React.useMemo(() => getStats(activeUser), [getStats, activeUser]);
+  const activeStats = progress[activeUser] || { completed: 0, total: 0, percentage: 100, remaining: 0 };
   const activeUserTheme = USER_COLORS[activeUser];
 
   const encouragingWords = React.useMemo(() => {
@@ -85,7 +62,7 @@ export function UserStats({ tasks, activeUser, streaks, todayStr }: UserStatsPro
     if (activeStats.percentage < 40) return "Great start! Every small step counts.";
     if (activeStats.percentage < 70) return "Over the hump! Keep that momentum building.";
     if (activeStats.percentage < 100) return "Almost at the finish line! Stay focused.";
-    return "Legendary status! You've crushed your schedule!";
+    return "Legendary status! You've actioned everything for today!";
   }, [activeStats]);
 
   return (
@@ -110,7 +87,7 @@ export function UserStats({ tasks, activeUser, streaks, todayStr }: UserStatsPro
                   {activeUser}'s Daily Progress
                   {streaks[activeUser] > 0 && (
                     <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full dark:bg-orange-900/30 dark:text-orange-400">
-                      <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]} Day Working Streak
+                      <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]} Day Action Streak
                     </span>
                   )}
                 </h2>
@@ -124,7 +101,7 @@ export function UserStats({ tasks, activeUser, streaks, todayStr }: UserStatsPro
                 {activeStats.percentage}%
               </span>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {activeStats.remaining} Tasks Remaining to Start
+                {activeStats.remaining} Tasks Outstanding to Start
               </p>
             </div>
           </div>
@@ -142,7 +119,7 @@ export function UserStats({ tasks, activeUser, streaks, todayStr }: UserStatsPro
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-400">
             <Trophy className="h-4 w-4 text-amber-500" />
-            Daily Standings
+            Team Standings
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -44,6 +43,7 @@ export default function Home() {
     tabCounts,
     userCounts,
     userStreaks,
+    userProgress,
     isLoaded,
     searchQuery,
     setSearchQuery,
@@ -107,7 +107,10 @@ export default function Home() {
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Waking up FocusFlow...</p>
+        </div>
       </div>
     );
   }
@@ -172,7 +175,11 @@ export default function Home() {
           </div>
         </header>
 
-        <UserStats tasks={tasks} activeUser={activeUser} streaks={userStreaks} todayStr={todayStr} />
+        <UserStats 
+          activeUser={activeUser} 
+          streaks={userStreaks} 
+          progress={userProgress} 
+        />
 
         <div className="flex flex-col items-center mb-8">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-lg">
@@ -226,7 +233,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Outstanding Tasks</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Time Frames</span>
               </div>
               <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
                 {TAB_OPTIONS.map((tab) => {
@@ -261,18 +268,21 @@ export default function Home() {
             <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border dark:border-slate-700 flex items-center h-12">
               <button 
                 onClick={() => setViewMode('list')}
+                title="List View"
                 className={cn("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
               >
                 <LayoutList className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('board')}
+                title="Board View"
                 className={cn("p-2 rounded-lg transition-all", viewMode === 'board' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
               >
                 <LayoutGrid className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('diary')}
+                title="Diary View"
                 className={cn("p-2 rounded-lg transition-all", viewMode === 'diary' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
               >
                 <CalendarRange className="h-5 w-5" />

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -81,10 +80,10 @@ export function TaskDiaryView({ tasks, onEdit, onDelete, onStatusChange, onMoveD
     // Always show if it's the actual due date
     if (isSameDay(taskDueDate, day)) return true;
     
-    // CRITICAL: If the task is completed, DO NOT project it into future days.
-    if (task.status === 'Completed') return false;
+    // CRITICAL: If the task is actioned (Completed or Awaiting Info), DO NOT project it into future days.
+    if (task.status === 'Completed' || task.status === 'Awaiting Information') return false;
     
-    // If not completed and recurring, project it forward
+    // If not completed/actioned and recurring, project it forward
     if (task.recurrence === 'None') return false;
     if (taskDueDate > day) return false;
 
