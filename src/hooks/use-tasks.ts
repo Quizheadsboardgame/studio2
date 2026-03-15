@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -14,14 +15,20 @@ import {
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { addDays, addWeeks, addMonths, parseISO, format, getDay, subDays, isBefore } from 'date-fns';
+import { addDays, addWeeks, addMonths, parseISO, format, getDay, subDays, isBefore, startOfDay } from 'date-fns';
 
 const STREAK_START_DATE = '2026-03-11';
 
-/** Helper to identify if a task is "Actioned" (done for today) */
+/** 
+ * Helper to identify if a task is "Actioned" (done/in progress for today).
+ * As per request: "Awaiting Information" counts as progress/actioned.
+ */
 const isActioned = (status: TaskStatus) => status === 'Completed' || status === 'Awaiting Information';
 
-/** Helper to identify if a task is "Outstanding" (needs to be started) */
+/** 
+ * Helper to identify if a task is "Outstanding" (needs to be started).
+ * As per request: "Awaiting Information" is NOT outstanding/to-do.
+ */
 const isOutstanding = (status: TaskStatus) => status === 'Incomplete' || status === 'Follow up Required';
 
 export function useTasks() {
@@ -41,6 +48,7 @@ export function useTasks() {
 
   const syncRef = useRef<Set<string>>(new Set());
 
+  // Initialize dates correctly to avoid hydration mismatch
   useEffect(() => {
     const today = new Date();
     const dayOfWeek = getDay(today);
@@ -59,6 +67,7 @@ export function useTasks() {
     setTomorrowStr(format(nextWorkingDay, 'yyyy-MM-dd'));
   }, []);
 
+  // Auth check
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
@@ -99,16 +108,9 @@ export function useTasks() {
     });
   }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
-  // Consolidated Stats and Filtering Memoization
+  // Consolidated Stats calculation
   const stats = useMemo(() => {
     if (!todayStr) return { tabCounts: {}, userCounts: {}, userStreaks: {}, userProgress: {} };
-
-    // Group tasks by owner for performance
-    const tasksByUser: Record<string, Task[]> = {};
-    USER_OPTIONS.forEach(u => tasksByUser[u] = []);
-    tasks.forEach(t => {
-      if (tasksByUser[t.owner]) tasksByUser[t.owner].push(t);
-    });
 
     const tabCounts: Record<string, number> = {};
     const userCounts: Record<string, number> = {};
@@ -116,7 +118,7 @@ export function useTasks() {
     const userProgress: Record<string, any> = {};
 
     USER_OPTIONS.forEach(userName => {
-      const userTasks = tasksByUser[userName];
+      const userTasks = tasks.filter(t => t.owner === userName);
       
       // 1. Tab Counts for active user (only show outstanding tasks)
       if (userName === activeUser) {
@@ -129,6 +131,7 @@ export function useTasks() {
       userCounts[userName] = userTasks.filter(t => isOutstanding(t.status)).length;
 
       // 3. Daily Progress (Based on the 'Today' tab to include overdue items)
+      // Percentage calculation includes "Awaiting Information" as completed.
       const todayTabTasks = userTasks.filter(t => t.tab === 'Today');
       const actionedCount = todayTabTasks.filter(t => isActioned(t.status)).length;
       const total = todayTabTasks.length;
@@ -140,15 +143,9 @@ export function useTasks() {
       };
 
       // 4. Streak Calculation
-      const tasksByDate: Record<string, Task[]> = {};
-      userTasks.forEach(t => {
-        if (!tasksByDate[t.dueDate]) tasksByDate[t.dueDate] = [];
-        tasksByDate[t.dueDate].push(t);
-      });
-
       let streak = 0;
       const startDate = parseISO(STREAK_START_DATE);
-      const todayObj = new Date();
+      const todayObj = startOfDay(new Date());
       let offset = 1; 
       let daysChecked = 0;
       const MAX_LOOKBACK = 90;
@@ -162,8 +159,8 @@ export function useTasks() {
         
         if (!isWeekend) {
           const checkDateStr = format(checkDate, 'yyyy-MM-dd');
-          const dayTasks = tasksByDate[checkDateStr] || [];
-          // A day is successful if all tasks assigned to that specific date were actioned
+          const dayTasks = userTasks.filter(t => t.dueDate === checkDateStr);
+          // A day is successful if all tasks for that date were actioned
           const isDaySuccessful = dayTasks.length === 0 || dayTasks.every(t => isActioned(t.status));
           
           if (isDaySuccessful) streak++;
@@ -173,7 +170,7 @@ export function useTasks() {
         daysChecked++;
       }
       
-      // If everything today is actioned, it adds to the streak
+      // Add current day if all today's tasks are actioned
       if (userProgress[userName].total > 0 && userProgress[userName].total === userProgress[userName].completed) {
         streak++;
       }
@@ -181,17 +178,12 @@ export function useTasks() {
     });
 
     return { tabCounts, userCounts, userStreaks, userProgress };
-  }, [tasks, activeUser, todayStr, tomorrowStr]);
+  }, [tasks, activeUser, todayStr]);
 
   const filteredTasks = useMemo(() => {
-    const seen = new Set<string>();
-
     return tasks
       .filter((task) => {
-        const duplicateKey = `${task.name.trim().toLowerCase()}-${task.dueDate}-${task.owner}-${task.status}`;
-        if (seen.has(duplicateKey)) return false;
-        seen.add(duplicateKey);
-
+        // Hide past completed tasks unless toggled on
         const isPastCompleted = task.status === 'Completed' && task.dueDate < todayStr;
         if (!showPastCompleted && isPastCompleted) return false;
 
@@ -206,6 +198,7 @@ export function useTasks() {
         return matchesSearch && matchesStatus && matchesTab && matchesUser;
       })
       .sort((a, b) => {
+        // Sort actioned tasks to the bottom
         const aStatusScore = isActioned(a.status) ? 1 : 0;
         const bStatusScore = isActioned(b.status) ? 1 : 0;
         if (aStatusScore !== bStatusScore) return aStatusScore - bStatusScore;
@@ -235,12 +228,12 @@ export function useTasks() {
   };
 
   const moveTaskStatus = (id: string, newStatus: TaskStatus) => {
-    if (!db || !user || !tasksQuery) return;
+    if (!db || !user) return;
     const task = tasks.find(t => t.id === id);
     if (!task) return;
     const taskRef = doc(db, 'users', user.uid, 'tasks', id);
     
-    // Recurrence logic when completing
+    // Recurrence logic
     if (newStatus === 'Completed' && task.recurrence && task.recurrence !== 'None') {
       let nextDate: Date;
       const currentDueDate = parseISO(task.dueDate);
@@ -258,10 +251,12 @@ export function useTasks() {
       }
       const nextDueDateStr = format(nextDate, 'yyyy-MM-dd');
       const now = new Date().toISOString();
+      
       const alreadyExists = tasks.some(t => 
         t.name.trim().toLowerCase() === task.name.trim().toLowerCase() && 
         t.dueDate === nextDueDateStr && t.owner === task.owner && t.status !== 'Completed'
       );
+      
       if (!alreadyExists) {
         const { id: _, ...dataForNewTask } = { ...task, status: 'Incomplete', dueDate: nextDueDateStr, createdAt: now, updatedAt: now };
         // @ts-ignore

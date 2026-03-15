@@ -156,23 +156,6 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="createdBy" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Assigned By</Label>
-            <Select
-              value={formData.createdBy || formData.owner}
-              onValueChange={(val) => setFormData({ ...formData, createdBy: val as any })}
-            >
-              <SelectTrigger id="createdBy" className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                <SelectValue placeholder="Select Assigner" />
-              </SelectTrigger>
-              <SelectContent>
-                {USER_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
             <Label htmlFor="dueDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Due Date</Label>
             <Input
               id="dueDate"
