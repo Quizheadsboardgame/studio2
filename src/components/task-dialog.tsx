@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Repeat, Clock, CheckCircle2, UserPen, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TaskDialogProps {
   task: Task | null;
@@ -46,121 +47,131 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden flex flex-col max-h-[90vh]">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             {isCompleted ? <CheckCircle2 className="text-green-500 h-5 w-5" /> : isAwaiting ? <Info className="text-orange-500 h-5 w-5" /> : <Clock className="text-blue-500 h-5 w-5" />}
             {task?.id === 'new' ? 'Create New Task' : 'Task Details'}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-5 py-4">
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Task Name</Label>
-              {formData.createdBy && formData.createdBy !== formData.owner && (
-                <div className={cn("flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border", USER_THEMES[formData.createdBy as keyof typeof USER_THEMES])}>
-                  <UserPen className="h-3 w-3" /> Created by {formData.createdBy}
-                </div>
-              )}
-            </div>
-            <Input
-              id="name"
-              placeholder="What needs to be done?"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className={cn("text-lg font-semibold h-12 border-none px-0 focus-visible:ring-0 shadow-none bg-transparent", isCompleted && "line-through text-muted-foreground")}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <ScrollArea className="flex-1 px-6">
+          <div className="grid gap-6 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="status" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</Label>
-              <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val as any })}>
-                <SelectTrigger id="status" className="bg-slate-50 dark:bg-slate-900">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Task Name</Label>
+                {formData.createdBy && formData.createdBy !== formData.owner && (
+                  <div className={cn("flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-full border", USER_THEMES[formData.createdBy as keyof typeof USER_THEMES])}>
+                    <UserPen className="h-2.5 w-2.5" /> Created by {formData.createdBy}
+                  </div>
+                )}
+              </div>
+              <Input
+                id="name"
+                placeholder="What needs to be done?"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className={cn("text-lg font-semibold h-11 border-none px-0 focus-visible:ring-0 shadow-none bg-transparent", isCompleted && "line-through text-muted-foreground")}
+              />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="priority" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Priority</Label>
-              <Select value={formData.priority} onValueChange={(val) => setFormData({ ...formData, priority: val as any })}>
-                <SelectTrigger id="priority" className="bg-slate-50 dark:bg-slate-900">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="tab" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Schedule</Label>
-              <Select value={formData.tab} onValueChange={(val) => setFormData({ ...formData, tab: val as any })}>
-                <SelectTrigger id="tab" className="bg-slate-50 dark:bg-slate-900">
-                  <SelectValue placeholder="Schedule" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAB_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="status" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</Label>
+                <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val as any })}>
+                  <SelectTrigger id="status" className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="priority" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Priority</Label>
+                <Select value={formData.priority} onValueChange={(val) => setFormData({ ...formData, priority: val as any })}>
+                  <SelectTrigger id="priority" className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="owner" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Assignee</Label>
-              <Select value={formData.owner} onValueChange={(val) => setFormData({ ...formData, owner: val as any })}>
-                <SelectTrigger id="owner" className="bg-slate-50 dark:bg-slate-900">
-                  <SelectValue placeholder="User" />
-                </SelectTrigger>
-                <SelectContent>
-                  {USER_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="tab" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Schedule</Label>
+                <Select value={formData.tab} onValueChange={(val) => setFormData({ ...formData, tab: val as any })}>
+                  <SelectTrigger id="tab" className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <SelectValue placeholder="Schedule" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TAB_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="owner" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Assignee</Label>
+                <Select value={formData.owner} onValueChange={(val) => setFormData({ ...formData, owner: val as any })}>
+                  <SelectTrigger id="owner" className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <SelectValue placeholder="User" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {USER_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="dueDate" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Due Date</Label>
+                <Input id="dueDate" type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="recurrence" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Repeat className="h-3 w-3" /> Recurrence
+                </Label>
+                <Select value={formData.recurrence || 'None'} onValueChange={(val) => setFormData({ ...formData, recurrence: val as any })}>
+                  <SelectTrigger id="recurrence" className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RECURRENCE_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="startTime" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
+                <Input id="startTime" type="time" value={formData.startTime || ""} onChange={(e) => setFormData({ ...formData, startTime: e.target.value })} className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="endTime" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Finish Time</Label>
+                <Input id="endTime" type="time" value={formData.endTime || ""} onChange={(e) => setFormData({ ...formData, endTime: e.target.value })} className="h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800" />
+              </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="notes" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Notes & Details</Label>
+              <Textarea 
+                id="notes" 
+                className="resize-none bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 min-h-[80px] text-sm" 
+                rows={3} 
+                value={formData.notes || ""} 
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })} 
+                placeholder="Any extra context..." 
+              />
             </div>
           </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="dueDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Due Date</Label>
-            <Input id="dueDate" type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} className="bg-slate-50 dark:bg-slate-900" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="startTime" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
-              <Input id="startTime" type="time" value={formData.startTime || ""} onChange={(e) => setFormData({ ...formData, startTime: e.target.value })} className="bg-slate-50 dark:bg-slate-900" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="endTime" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Finish Time</Label>
-              <Input id="endTime" type="time" value={formData.endTime || ""} onChange={(e) => setFormData({ ...formData, endTime: e.target.value })} className="bg-slate-50 dark:bg-slate-900" />
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="recurrence" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Repeat className="h-3.5 w-3.5" /> Recurrence
-            </Label>
-            <Select value={formData.recurrence || 'None'} onValueChange={(val) => setFormData({ ...formData, recurrence: val as any })}>
-              <SelectTrigger id="recurrence" className="bg-slate-50 dark:bg-slate-900">
-                <SelectValue placeholder="None" />
-              </SelectTrigger>
-              <SelectContent>
-                {RECURRENCE_OPTIONS.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="notes" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notes</Label>
-            <Textarea id="notes" className="resize-none bg-slate-50 dark:bg-slate-900 min-h-[100px]" rows={3} value={formData.notes || ""} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Details..." />
-          </div>
-        </div>
+        </ScrollArea>
         
-        <DialogFooter className="bg-slate-50 dark:bg-slate-900/50 -mx-6 -mb-6 p-4 mt-2 border-t">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <DialogFooter className="bg-slate-50 dark:bg-slate-900/50 p-4 border-t mt-auto">
+          <Button variant="ghost" size="sm" onClick={onClose} className="font-semibold">Cancel</Button>
           <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full px-8 shadow-lg shadow-blue-600/20">
             {task?.id === 'new' ? 'Create Task' : 'Save Changes'}
           </Button>
