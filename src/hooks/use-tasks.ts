@@ -118,9 +118,7 @@ export function useTasks() {
       // Overall outstanding count (Total across all time frames)
       userCounts[userName] = userTasks.filter(t => isOutstanding(t.status)).length;
 
-      // PROGRESS LOGIC:
-      // Workload for Today = (Due Today) + (Past Outstanding tasks)
-      // We explicitly EXCLUDE "Past Completed" tasks so they don't skew today's percentage.
+      // PROGRESS LOGIC: Today's Workload = (Due Today) + (Past Outstanding)
       const workloadToday = userTasks.filter(t => 
         t.dueDate === todayStr || (t.dueDate < todayStr && t.status !== 'Completed')
       );
@@ -265,7 +263,7 @@ export function useTasks() {
     activeUser, setActiveUser,
     viewMode, setViewMode,
     updateTask, deleteTask, moveTaskStatus, moveTaskDate,
-    showPastCompleted, setSearchQuery,
+    showPastCompleted, setShowPastCompleted,
     todayStr, tomorrowStr
   };
 }

@@ -362,6 +362,7 @@ export default function Home() {
       </div>
 
       <TaskDialog 
+        key={editingTask?.id || 'none'}
         task={editingTask} 
         isOpen={!!editingTask} 
         onClose={() => setEditingTask(null)} 
