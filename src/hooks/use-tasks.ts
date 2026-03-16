@@ -115,18 +115,24 @@ export function useTasks() {
         });
       }
 
-      // Overall outstanding count
+      // Overall outstanding count (Total across all time frames)
       userCounts[userName] = userTasks.filter(t => isOutstanding(t.status)).length;
 
-      // Progress calculation for the "Today" view
-      const todayTabTasks = userTasks.filter(t => t.tab === 'Today');
-      const actionedCount = todayTabTasks.filter(t => isActioned(t.status)).length;
-      const total = todayTabTasks.length;
+      // PROGRESS LOGIC:
+      // Workload for Today = (Due Today) + (Past Outstanding tasks)
+      // We explicitly EXCLUDE "Past Completed" tasks so they don't skew today's percentage.
+      const workloadToday = userTasks.filter(t => 
+        t.dueDate === todayStr || (t.dueDate < todayStr && t.status !== 'Completed')
+      );
+      
+      const actionedCount = workloadToday.filter(t => isActioned(t.status)).length;
+      const total = workloadToday.length;
+      
       userProgress[userName] = {
         completed: actionedCount,
         total,
         percentage: total > 0 ? Math.round((actionedCount / total) * 100) : 100,
-        remaining: todayTabTasks.filter(t => isOutstanding(t.status)).length
+        remaining: workloadToday.filter(t => isOutstanding(t.status)).length
       };
 
       // Streak calculation (skipping weekends)
@@ -154,7 +160,7 @@ export function useTasks() {
         daysChecked++;
       }
       
-      // If all of today's tasks are actioned, increase streak
+      // If all of today's workload is actioned, increase streak
       if (userProgress[userName].total > 0 && userProgress[userName].remaining === 0) {
         streak++;
       }
@@ -259,7 +265,7 @@ export function useTasks() {
     activeUser, setActiveUser,
     viewMode, setViewMode,
     updateTask, deleteTask, moveTaskStatus, moveTaskDate,
-    showPastCompleted, setShowPastCompleted,
+    showPastCompleted, setSearchQuery,
     todayStr, tomorrowStr
   };
 }
