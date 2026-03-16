@@ -101,7 +101,7 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                 {activeStats.percentage}%
               </span>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {activeStats.remaining} Tasks Outstanding to Start
+                {activeStats.completed} out of {activeStats.total} tasks completed
               </p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                       )}
                     </div>
                     <p className="text-[10px] text-muted-foreground font-semibold">
-                      {stat.remaining} left to start
+                      {stat.completed}/{stat.total} completed
                     </p>
                   </div>
                 </div>
