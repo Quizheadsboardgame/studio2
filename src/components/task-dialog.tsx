@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -29,21 +28,29 @@ const USER_THEMES = {
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
   const [formData, setFormData] = React.useState<Task | null>(null);
 
+  // Synchronize internal state with the task prop when the dialog opens
   React.useEffect(() => {
-    if (task && isOpen) {
+    if (isOpen && task) {
       setFormData({ ...task });
     }
-  }, [task, isOpen]);
+  }, [isOpen, task]);
 
-  if (!formData) return null;
+  // If the dialog is open but we don't have form data yet, show nothing
+  // This prevents flickering with stale data from a previous open
+  if (!formData && isOpen) return null;
 
   const handleSave = () => {
-    onSave(formData);
-    onClose();
+    if (formData) {
+      onSave(formData);
+      onClose();
+    }
   };
 
-  const isCompleted = formData.status === 'Completed';
-  const isAwaiting = formData.status === 'Awaiting Information';
+  // When closing, we keep the last formData so the exit animation has content
+  // We use a fallback if formData is null
+  const activeData = formData || ({} as Task);
+  const isCompleted = activeData.status === 'Completed';
+  const isAwaiting = activeData.status === 'Awaiting Information';
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -60,17 +67,17 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Task Name</Label>
-                {formData.createdBy && formData.createdBy !== formData.owner && (
-                  <div className={cn("flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-full border", USER_THEMES[formData.createdBy as keyof typeof USER_THEMES])}>
-                    <UserPen className="h-2.5 w-2.5" /> Created by {formData.createdBy}
+                {activeData.createdBy && activeData.createdBy !== activeData.owner && (
+                  <div className={cn("flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-full border", USER_THEMES[activeData.createdBy as keyof typeof USER_THEMES])}>
+                    <UserPen className="h-2.5 w-2.5" /> Created by {activeData.createdBy}
                   </div>
                 )}
               </div>
               <Input
                 id="name"
                 placeholder="What needs to be done?"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={activeData.name || ""}
+                onChange={(e) => setFormData({ ...activeData, name: e.target.value })}
                 className={cn("text-xl font-bold h-12 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus-visible:ring-blue-500 shadow-sm", isCompleted && "line-through text-muted-foreground")}
               />
             </div>
@@ -78,7 +85,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="status" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</Label>
-                <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val as any })}>
+                <Select value={activeData.status} onValueChange={(val) => setFormData({ ...activeData, status: val as any })}>
                   <SelectTrigger id="status" className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -89,7 +96,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="priority" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Priority</Label>
-                <Select value={formData.priority} onValueChange={(val) => setFormData({ ...formData, priority: val as any })}>
+                <Select value={activeData.priority} onValueChange={(val) => setFormData({ ...activeData, priority: val as any })}>
                   <SelectTrigger id="priority" className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                     <SelectValue placeholder="Priority" />
                   </SelectTrigger>
@@ -100,7 +107,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="owner" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Assignee</Label>
-                <Select value={formData.owner} onValueChange={(val) => setFormData({ ...formData, owner: val as any })}>
+                <Select value={activeData.owner} onValueChange={(val) => setFormData({ ...activeData, owner: val as any })}>
                   <SelectTrigger id="owner" className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                     <SelectValue placeholder="User" />
                   </SelectTrigger>
@@ -114,7 +121,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="tab" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Schedule</Label>
-                <Select value={formData.tab} onValueChange={(val) => setFormData({ ...formData, tab: val as any })}>
+                <Select value={activeData.tab} onValueChange={(val) => setFormData({ ...activeData, tab: val as any })}>
                   <SelectTrigger id="tab" className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                     <SelectValue placeholder="Schedule" />
                   </SelectTrigger>
@@ -125,13 +132,13 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="dueDate" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Due Date</Label>
-                <Input id="dueDate" type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700" />
+                <Input id="dueDate" type="date" value={activeData.dueDate || ""} onChange={(e) => setFormData({ ...activeData, dueDate: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700" />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="recurrence" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Repeat className="h-3 w-3" /> Pattern
                 </Label>
-                <Select value={formData.recurrence || 'None'} onValueChange={(val) => setFormData({ ...formData, recurrence: val as any })}>
+                <Select value={activeData.recurrence || 'None'} onValueChange={(val) => setFormData({ ...activeData, recurrence: val as any })}>
                   <SelectTrigger id="recurrence" className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
@@ -147,13 +154,13 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                 <Label htmlFor="startTime" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Clock className="h-3 w-3" /> Start Time
                 </Label>
-                <Input id="startTime" type="time" value={formData.startTime || ""} onChange={(e) => setFormData({ ...formData, startTime: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700" />
+                <Input id="startTime" type="time" value={activeData.startTime || ""} onChange={(e) => setFormData({ ...activeData, startTime: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700" />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="endTime" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Clock className="h-3 w-3" /> Finish Time
                 </Label>
-                <Input id="endTime" type="time" value={formData.endTime || ""} onChange={(e) => setFormData({ ...formData, endTime: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700" />
+                <Input id="endTime" type="time" value={activeData.endTime || ""} onChange={(e) => setFormData({ ...activeData, endTime: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700" />
               </div>
             </div>
 
@@ -163,8 +170,8 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                 id="notes" 
                 className="resize-none bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 min-h-[100px] text-sm shadow-sm" 
                 rows={4} 
-                value={formData.notes || ""} 
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })} 
+                value={activeData.notes || ""} 
+                onChange={(e) => setFormData({ ...activeData, notes: e.target.value })} 
                 placeholder="Add any extra details Owen, Lucy, or Nick might need..." 
               />
             </div>
