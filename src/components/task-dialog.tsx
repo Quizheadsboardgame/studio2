@@ -32,12 +32,11 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
   React.useEffect(() => {
     if (isOpen && task) {
       setFormData({ ...task });
+    } else if (!isOpen) {
+      // Clear data when closed to ensure a clean state for next open
+      setFormData(null);
     }
   }, [isOpen, task]);
-
-  // If the dialog is open but we don't have form data yet, show nothing
-  // This prevents flickering with stale data from a previous open
-  if (!formData && isOpen) return null;
 
   const handleSave = () => {
     if (formData) {
@@ -46,8 +45,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
     }
   };
 
-  // When closing, we keep the last formData so the exit animation has content
-  // We use a fallback if formData is null
+  // We use a fallback if formData is null for rendering stability during animations
   const activeData = formData || ({} as Task);
   const isCompleted = activeData.status === 'Completed';
   const isAwaiting = activeData.status === 'Awaiting Information';
