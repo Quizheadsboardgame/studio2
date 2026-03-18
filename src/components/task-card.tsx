@@ -42,8 +42,10 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
     return task.priority === 'High' && task.dueDate === todayStr && task.status !== 'Completed';
   }, [task.priority, task.dueDate, task.status, todayStr]);
 
+  const isUrgent = isHighPriorityDueToday && task.status !== 'Awaiting Information';
+
   const priorityColor = {
-    High: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
+    High: "bg-red-100 text-red-700 border-red-200 dark:bg-red-700 dark:text-white dark:border-red-800",
     Medium: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
     Low: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
   }[task.priority];
@@ -54,8 +56,8 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
       ? <Info className="w-4 h-4 text-orange-500 animate-pulse" />
       : task.status === 'Follow up Required'
         ? <AlertCircle className="w-4 h-4 text-blue-500" />
-        : isHighPriorityDueToday 
-          ? <AlertCircle className="w-4 h-4 text-destructive animate-pulse" />
+        : isUrgent 
+          ? <AlertCircle className="w-4 h-4 text-destructive dark:text-white animate-pulse" />
           : <Clock className="w-4 h-4 text-muted-foreground" />;
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -64,7 +66,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Only trigger if we weren't just swiping
     if (Math.abs(touchOffset) < 10) {
       onEdit(task);
     }
@@ -74,7 +75,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
     e.stopPropagation();
   };
 
-  // Touch handlers for swipe
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -83,28 +83,20 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
     if (touchStart === null) return;
     const currentTouch = e.targetTouches[0].clientX;
     const diff = currentTouch - touchStart;
-    
-    // Check if we can swipe (can't swipe left if already completed)
     if (diff < 0 && task.status === 'Completed') return;
-    
     setTouchOffset(diff);
   };
 
   const handleTouchEnd = () => {
-    // Swipe Left to Complete
     if (touchOffset < -100 && task.status !== 'Completed') {
       onStatusChange(task.id, 'Completed');
-    } 
-    // Swipe Right to Delay
-    else if (touchOffset > 100) {
+    } else if (touchOffset > 100) {
       onMoveDate(task.id);
     }
-    
     setTouchStart(null);
     setTouchOffset(0);
   };
 
-  // Format date to UK format (DD/MM/YYYY)
   const formattedDate = React.useMemo(() => {
     try {
       return format(parseISO(task.dueDate), 'dd/MM/yyyy');
@@ -124,7 +116,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
 
   return (
     <div className="relative overflow-hidden rounded-lg group">
-      {/* Swipe Left Background (Complete) */}
       <div 
         className={cn(
           "absolute inset-0 bg-green-500 flex items-center justify-end px-6 transition-opacity",
@@ -137,7 +128,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
         </div>
       </div>
 
-      {/* Swipe Right Background (Delay) */}
       <div 
         className={cn(
           "absolute inset-0 bg-amber-500 flex items-center justify-start px-6 transition-opacity",
@@ -168,8 +158,8 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
             ? "border-green-200 bg-green-50/50 dark:bg-green-950/10 opacity-75" 
             : task.status === 'Awaiting Information'
               ? "border-orange-200 bg-orange-50/50 dark:bg-orange-950/10 shadow-sm"
-              : isHighPriorityDueToday && task.status !== 'Awaiting Information'
-                ? "border-destructive bg-red-50/50 dark:bg-red-950/10 shadow-sm" 
+              : isUrgent
+                ? "border-destructive bg-red-50/50 dark:bg-red-600 dark:border-red-500 shadow-sm" 
                 : "border-transparent"
         )}
       >
@@ -182,12 +172,12 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                   <h3 className={cn(
                     "text-sm font-bold truncate",
                     task.status === 'Completed' && "line-through text-muted-foreground font-medium",
-                    isHighPriorityDueToday && task.status !== 'Awaiting Information' && "text-destructive"
+                    isUrgent && "text-destructive dark:text-white"
                   )}>
                     {task.name}
                   </h3>
                   {task.recurrence && task.recurrence !== 'None' && (
-                    <Repeat className="h-3 w-3 text-blue-500" title={`Recurring: ${task.recurrence}`} />
+                    <Repeat className={cn("h-3 w-3", isUrgent ? "text-white/80" : "text-blue-500")} title={`Recurring: ${task.recurrence}`} />
                   )}
                 </div>
                 {showCreator && (
@@ -200,7 +190,10 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                   </div>
                 )}
                 {task.notes && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-2 leading-relaxed">
+                  <p className={cn(
+                    "text-xs line-clamp-2 mt-2 leading-relaxed",
+                    isUrgent ? "text-red-900/80 dark:text-white/90" : "text-muted-foreground"
+                  )}>
                     {task.notes}
                   </p>
                 )}
@@ -210,7 +203,14 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
             <div onClick={handleActionClick}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn(
+                      "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
+                      isUrgent && "text-white hover:bg-white/10"
+                    )}
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -236,10 +236,10 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
               </Badge>
               <div className={cn(
                 "flex items-center text-[11px] font-medium",
-                isHighPriorityDueToday && task.status !== 'Awaiting Information' ? "text-destructive font-black" : "text-muted-foreground"
+                isUrgent ? "text-white font-black" : "text-muted-foreground"
               )}>
                 <Calendar className="w-3.5 h-3.5 mr-1.5" />
-                {formattedDate} {timeDisplay && `@ ${timeDisplay}`} {isHighPriorityDueToday && "!!!"}
+                {formattedDate} {timeDisplay && `@ ${timeDisplay}`} {isUrgent && "!!!"}
               </div>
             </div>
             
@@ -248,7 +248,10 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                  className={cn(
+                    "h-8 w-8",
+                    isUrgent ? "text-white/80 hover:text-white hover:bg-white/10" : "text-slate-400 hover:text-blue-600"
+                  )}
                   onClick={() => onEdit(task)}
                 >
                   <Edit2 className="h-4 w-4" />
