@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -16,27 +15,19 @@ interface UserStatsProps {
 
 const USER_COLORS = {
   'Owen': {
-    bg: 'bg-blue-600',
-    text: 'text-blue-600',
-    border: 'border-blue-100',
-    shadow: 'shadow-blue-500/5',
-    ring: 'ring-blue-200',
+    bg: 'bg-blue-900',
+    text: 'text-blue-900',
+    border: 'border-blue-200',
+    shadow: 'shadow-blue-900/5',
+    ring: 'ring-blue-300',
     soft: 'bg-blue-100'
   },
   'Lucy': {
-    bg: 'bg-pink-500',
-    text: 'text-pink-500',
-    border: 'border-pink-100',
-    shadow: 'shadow-pink-500/5',
-    ring: 'ring-pink-200',
-    soft: 'bg-pink-100'
-  },
-  'Nick': {
-    bg: 'bg-emerald-500',
-    text: 'text-emerald-500',
-    border: 'border-emerald-100',
-    shadow: 'shadow-emerald-500/5',
-    ring: 'ring-emerald-200',
+    bg: 'bg-emerald-900',
+    text: 'text-emerald-900',
+    border: 'border-emerald-200',
+    shadow: 'shadow-emerald-900/5',
+    ring: 'ring-emerald-300',
     soft: 'bg-emerald-100'
   }
 };

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -21,9 +20,8 @@ interface TaskCardProps {
 }
 
 const USER_THEMES = {
-  'Owen': 'text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400',
-  'Lucy': 'text-pink-600 bg-pink-50 border-pink-100 dark:bg-pink-900/20 dark:border-pink-800 dark:text-pink-400',
-  'Nick': 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
+  'Owen': 'text-blue-900 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300',
+  'Lucy': 'text-emerald-900 bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300'
 };
 
 export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, isBoard }: TaskCardProps) {

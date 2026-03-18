@@ -115,9 +115,8 @@ export default function Home() {
   }
 
   const userBgTint = {
-    'Owen': 'bg-blue-50/30 dark:bg-blue-900/10',
-    'Lucy': 'bg-pink-50/30 dark:bg-pink-900/10',
-    'Nick': 'bg-emerald-50/30 dark:bg-emerald-900/10'
+    'Owen': 'bg-blue-950/10 dark:bg-blue-900/20',
+    'Lucy': 'bg-emerald-950/10 dark:bg-emerald-900/20'
   }[activeUser];
 
   return (
@@ -181,8 +180,8 @@ export default function Home() {
         />
 
         <div className="flex flex-col items-center mb-8">
-          <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-lg">
-            <TabsList className="grid w-full grid-cols-3 h-14 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
+          <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-sm">
+            <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
               {USER_OPTIONS.map((userName) => {
                 const count = userCounts[userName] || 0;
                 const streak = userStreaks[userName] || 0;
@@ -194,9 +193,8 @@ export default function Home() {
                     value={userName}
                     className={cn(
                       "relative rounded-xl font-bold transition-all data-[state=active]:text-white h-12",
-                      userName === 'Owen' && "data-[state=active]:bg-blue-600",
-                      userName === 'Lucy' && "data-[state=active]:bg-pink-500",
-                      userName === 'Nick' && "data-[state=active]:bg-emerald-500"
+                      userName === 'Owen' && "data-[state=active]:bg-blue-900",
+                      userName === 'Lucy' && "data-[state=active]:bg-emerald-900"
                     )}
                   >
                     <div className="flex flex-col items-center justify-center gap-0">
@@ -214,9 +212,8 @@ export default function Home() {
                       <span className={cn(
                         "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
                         isActive ? "bg-white border-white" : "bg-slate-900 text-white border-white dark:border-slate-800",
-                        isActive && userName === 'Owen' && "text-blue-600",
-                        isActive && userName === 'Lucy' && "text-pink-500",
-                        isActive && userName === 'Nick' && "text-emerald-500"
+                        isActive && userName === 'Owen' && "text-blue-900",
+                        isActive && userName === 'Lucy' && "text-emerald-900"
                       )}>
                         {count}
                       </span>

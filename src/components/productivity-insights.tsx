@@ -22,9 +22,8 @@ interface ProductivityInsightsProps {
 }
 
 const COLORS = {
-  'Owen': '#2563eb', // Blue-600
-  'Lucy': '#ec4899', // Pink-500
-  'Nick': '#10b981'  // Emerald-500
+  'Owen': '#1e3a8a', // Blue-900
+  'Lucy': '#064e3b'  // Emerald-900
 };
 
 export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
@@ -62,8 +61,8 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
             <defs>
               {USER_OPTIONS.map(user => (
                 <linearGradient key={user} id={`color${user}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS[user]} stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor={COLORS[user]} stopOpacity={0}/>
+                  <stop offset="5%" stopColor={COLORS[user as keyof typeof COLORS]} stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor={COLORS[user as keyof typeof COLORS]} stopOpacity={0}/>
                 </linearGradient>
               ))}
             </defs>
@@ -101,7 +100,7 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
                 key={user}
                 type="monotone"
                 dataKey={user}
-                stroke={COLORS[user]}
+                stroke={COLORS[user as keyof typeof COLORS]}
                 strokeWidth={3}
                 fillOpacity={1}
                 fill={`url(#color${user})`}

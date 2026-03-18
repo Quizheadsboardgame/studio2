@@ -17,7 +17,7 @@ export type ParseTaskInput = z.infer<typeof ParseTaskInputSchema>;
 
 const ParseTaskOutputSchema = z.object({
   name: z.string().describe('Short name of the task.'),
-  owner: z.enum(['Owen', 'Lucy', 'Nick']).describe('The user the task is for.'),
+  owner: z.enum(['Owen', 'Lucy']).describe('The user the task is for.'),
   priority: z.enum(['High', 'Medium', 'Low']).describe('Task priority.'),
   dueDate: z.string().describe('Due date in yyyy-MM-dd format.'),
   startTime: z.string().optional().describe('Start time in HH:mm format.'),
@@ -43,7 +43,7 @@ Active User (default if not specified): {{{activeUser}}}
 Input Text: "{{{text}}}"
 
 Rules:
-1. If a name (Owen, Lucy, Nick) is mentioned, assign it to them. Otherwise, default to the active user.
+1. If a name (Owen, Lucy) is mentioned, assign it to them. Otherwise, default to the active user.
 2. If "tomorrow" is mentioned, set date to 1 day after current date.
 3. If "later" or "next week" is mentioned, set date to 7 days after current date.
 4. Extract time like "at 9am" or "14:00".

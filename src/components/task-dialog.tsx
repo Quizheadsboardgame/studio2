@@ -20,9 +20,8 @@ interface TaskDialogProps {
 }
 
 const USER_THEMES = {
-  'Owen': 'text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400',
-  'Lucy': 'text-pink-600 bg-pink-50 border-pink-100 dark:bg-pink-900/20 dark:border-pink-800 dark:text-pink-400',
-  'Nick': 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
+  'Owen': 'text-blue-900 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300',
+  'Lucy': 'text-emerald-900 bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300'
 };
 
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
@@ -80,7 +79,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="status" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</Label>
                 <Select value={activeData.status} onValueChange={(val) => setFormData({ ...activeData, status: val as any })}>
@@ -170,7 +169,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                 rows={4} 
                 value={activeData.notes || ""} 
                 onChange={(e) => setFormData({ ...activeData, notes: e.target.value })} 
-                placeholder="Add any extra details Owen, Lucy, or Nick might need..." 
+                placeholder="Add any extra details Owen or Lucy might need..." 
               />
             </div>
           </div>
