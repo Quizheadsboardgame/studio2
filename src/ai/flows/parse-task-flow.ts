@@ -5,7 +5,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { format, addDays } from 'date-fns';
 
 const ParseTaskInputSchema = z.object({
   text: z.string().describe('The natural language description of the task.'),
@@ -34,7 +33,7 @@ const prompt = ai.definePrompt({
   name: 'parseTaskPrompt',
   input: { schema: ParseTaskInputSchema },
   output: { schema: ParseTaskOutputSchema },
-  prompt: `You are an expert task organizer. 
+  prompt: `You are an expert task organizer for Owen and Lucy. 
 Convert the following natural language task description into a structured JSON object.
 
 Current Date: {{{currentDate}}}
@@ -43,7 +42,7 @@ Active User (default if not specified): {{{activeUser}}}
 Input Text: "{{{text}}}"
 
 Rules:
-1. If a name (Owen, Lucy) is mentioned, assign it to them. Otherwise, default to the active user.
+1. If "Owen" or "Lucy" is mentioned, assign it to them. Otherwise, default to the active user.
 2. If "tomorrow" is mentioned, set date to 1 day after current date.
 3. If "later" or "next week" is mentioned, set date to 7 days after current date.
 4. Extract time like "at 9am" or "14:00".

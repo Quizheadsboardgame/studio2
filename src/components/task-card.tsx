@@ -173,15 +173,15 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                 : "border-transparent"
         )}
       >
-        <CardContent className="p-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2 flex-1">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1">
               <span className="mt-1">{statusIcon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h3 className={cn(
-                    "text-sm font-semibold truncate",
-                    task.status === 'Completed' && "line-through text-muted-foreground",
+                    "text-sm font-bold truncate",
+                    task.status === 'Completed' && "line-through text-muted-foreground font-medium",
                     isHighPriorityDueToday && task.status !== 'Awaiting Information' && "text-destructive"
                   )}>
                     {task.name}
@@ -192,15 +192,15 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                 </div>
                 {showCreator && (
                   <div className={cn(
-                    "flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full border w-fit",
+                    "flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full border w-fit",
                     creatorTheme
                   )}>
                     <UserPen className="h-2.5 w-2.5" />
-                    <span className="text-[9px] font-bold">Created by {task.createdBy}</span>
+                    <span className="text-[9px] font-bold">From {task.createdBy}</span>
                   </div>
                 )}
                 {task.notes && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-2 leading-relaxed">
                     {task.notes}
                   </p>
                 )}
@@ -229,17 +229,17 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-3 gap-2">
+          <div className="flex items-center justify-between mt-4 gap-2">
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", priorityColor)}>
+              <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider", priorityColor)}>
                 {task.priority}
               </Badge>
               <div className={cn(
-                "flex items-center text-[10px]",
-                isHighPriorityDueToday && task.status !== 'Awaiting Information' ? "text-destructive font-bold" : "text-muted-foreground"
+                "flex items-center text-[11px] font-medium",
+                isHighPriorityDueToday && task.status !== 'Awaiting Information' ? "text-destructive font-black" : "text-muted-foreground"
               )}>
-                <Calendar className="w-3 h-3 mr-1" />
-                {formattedDate} {timeDisplay && `at ${timeDisplay}`} {isHighPriorityDueToday && "(TODAY)"}
+                <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                {formattedDate} {timeDisplay && `@ ${timeDisplay}`} {isHighPriorityDueToday && "!!!"}
               </div>
             </div>
             
@@ -248,18 +248,10 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-7 w-7"
+                  className="h-8 w-8 text-slate-400 hover:text-blue-600"
                   onClick={() => onEdit(task)}
                 >
-                  <Edit2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7 text-destructive hover:text-destructive"
-                  onClick={() => onDelete(task.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Edit2 className="h-4 w-4" />
                 </Button>
               </div>
             )}

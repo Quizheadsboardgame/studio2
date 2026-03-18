@@ -115,8 +115,8 @@ export default function Home() {
   }
 
   const userBgTint = {
-    'Owen': 'bg-blue-950/10 dark:bg-blue-900/20',
-    'Lucy': 'bg-emerald-950/10 dark:bg-emerald-900/20'
+    'Owen': 'bg-blue-950/5 dark:bg-blue-900/10',
+    'Lucy': 'bg-emerald-950/5 dark:bg-emerald-900/10'
   }[activeUser];
 
   return (
@@ -179,9 +179,9 @@ export default function Home() {
           progress={userProgress} 
         />
 
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-10">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-sm">
-            <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-white dark:bg-slate-800 shadow-sm border dark:border-slate-700 rounded-2xl">
+            <TabsList className="grid w-full grid-cols-2 h-16 p-1 bg-white dark:bg-slate-800 shadow-lg border dark:border-slate-700 rounded-2xl">
               {USER_OPTIONS.map((userName) => {
                 const count = userCounts[userName] || 0;
                 const streak = userStreaks[userName] || 0;
@@ -192,25 +192,25 @@ export default function Home() {
                     key={userName} 
                     value={userName}
                     className={cn(
-                      "relative rounded-xl font-bold transition-all data-[state=active]:text-white h-12",
+                      "relative rounded-xl font-bold transition-all data-[state=active]:text-white h-14",
                       userName === 'Owen' && "data-[state=active]:bg-blue-900",
                       userName === 'Lucy' && "data-[state=active]:bg-emerald-900"
                     )}
                   >
                     <div className="flex flex-col items-center justify-center gap-0">
-                      <span className="relative z-10">{userName}</span>
+                      <span className="relative z-10 text-base">{userName}</span>
                       {streak > 0 && (
                         <span className={cn(
-                          "text-[9px] flex items-center gap-0.5",
+                          "text-[10px] flex items-center gap-0.5",
                           isActive ? "text-white" : "text-orange-500"
                         )}>
-                          <Flame className="h-2.5 w-2.5 fill-current" /> {streak}d
+                          <Flame className="h-3 w-3 fill-current" /> {streak}d
                         </span>
                       )}
                     </div>
                     {count > 0 && (
                       <span className={cn(
-                        "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
+                        "absolute -top-2 -right-2 h-6 min-w-[24px] px-2 flex items-center justify-center rounded-full text-[11px] font-black border-2",
                         isActive ? "bg-white border-white" : "bg-slate-900 text-white border-white dark:border-slate-800",
                         isActive && userName === 'Owen' && "text-blue-900",
                         isActive && userName === 'Lucy' && "text-emerald-900"
@@ -241,7 +241,7 @@ export default function Home() {
                       key={tab}
                       onClick={() => setActiveTab(tab)}
                       className={cn(
-                        "relative px-5 py-2 text-sm font-semibold rounded-lg transition-all min-w-[100px]",
+                        "relative px-6 py-2.5 text-sm font-bold rounded-lg transition-all min-w-[110px]",
                         isActive ? "bg-blue-600 text-white shadow-md scale-105" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50",
                         viewMode === 'diary' && "opacity-50 cursor-not-allowed"
                       )}
@@ -261,7 +261,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border dark:border-slate-700 flex items-center h-12">
+            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 flex items-center h-12">
               <button 
                 onClick={() => setViewMode('list')}
                 title="List View"

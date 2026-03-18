@@ -3,8 +3,8 @@
 import * as React from "react";
 import { TaskUser, USER_OPTIONS } from "@/types/task";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Flame, Star, Zap } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Flame, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UserStatsProps {
@@ -18,33 +18,21 @@ const USER_COLORS = {
     bg: 'bg-blue-900',
     text: 'text-blue-900',
     border: 'border-blue-200',
-    shadow: 'shadow-blue-900/5',
+    shadow: 'shadow-blue-900/10',
     ring: 'ring-blue-300',
-    soft: 'bg-blue-100'
+    soft: 'bg-blue-50 dark:bg-blue-950/40'
   },
   'Lucy': {
     bg: 'bg-emerald-900',
     text: 'text-emerald-900',
     border: 'border-emerald-200',
-    shadow: 'shadow-emerald-900/5',
+    shadow: 'shadow-emerald-900/10',
     ring: 'ring-emerald-300',
-    soft: 'bg-emerald-100'
+    soft: 'bg-emerald-50 dark:bg-emerald-950/40'
   }
 };
 
 export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
-  const allUserStats = React.useMemo(() => {
-    return USER_OPTIONS.map((user) => ({
-      name: user,
-      ...(progress[user] || { completed: 0, total: 0, percentage: 100, remaining: 0 }),
-      streak: streaks[user] || 0
-    })).sort((a, b) => {
-      if (a.total > 0 && b.total === 0) return -1;
-      if (a.total === 0 && b.total > 0) return 1;
-      return b.percentage - a.percentage;
-    });
-  }, [progress, streaks]);
-
   const activeStats = progress[activeUser] || { completed: 0, total: 0, percentage: 100, remaining: 0 };
   const activeUserTheme = USER_COLORS[activeUser];
 
@@ -58,41 +46,41 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
   }, [activeStats]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+    <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
       <Card className={cn(
-        "lg:col-span-2 overflow-hidden border-2 shadow-lg transition-all duration-500",
+        "overflow-hidden border-2 shadow-xl transition-all duration-500",
         activeUserTheme.border,
         activeUserTheme.shadow,
-        "dark:border-slate-800"
+        "dark:border-slate-800 bg-white dark:bg-slate-900"
       )}>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <div className="flex items-start gap-4">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+            <div className="flex items-start gap-6">
               <div className={cn(
-                "h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner",
+                "h-16 w-16 rounded-2xl flex items-center justify-center shadow-inner",
                 activeUserTheme.soft
               )}>
-                <Flame className={cn("h-8 w-8", activeUserTheme.text, activeStats.percentage === 100 && activeStats.total > 0 && "animate-pulse")} />
+                <Flame className={cn("h-10 w-10", activeUserTheme.text, activeStats.percentage === 100 && activeStats.total > 0 && "animate-pulse")} />
               </div>
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-2xl font-bold flex items-center gap-3">
                   {activeUser}'s Daily Progress
                   {streaks[activeUser] > 0 && (
-                    <span className="flex items-center gap-1 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full dark:bg-orange-900/30 dark:text-orange-400">
-                      <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]} Day Action Streak
+                    <span className="flex items-center gap-1.5 text-xs bg-orange-100 text-orange-600 px-3 py-1 rounded-full dark:bg-orange-900/30 dark:text-orange-400 font-bold uppercase tracking-wider">
+                      <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]} Day Streak
                     </span>
                   )}
                 </h2>
-                <p className="text-sm text-muted-foreground font-medium mt-1">
+                <p className="text-base text-muted-foreground font-medium mt-1">
                   {encouragingWords}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <span className={cn("text-3xl font-black", activeUserTheme.text)}>
+              <span className={cn("text-5xl font-black tracking-tighter", activeUserTheme.text)}>
                 {activeStats.percentage}%
               </span>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">
                 {activeStats.completed} out of {activeStats.total} tasks completed
               </p>
             </div>
@@ -100,66 +88,10 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
           <div className="relative pt-2">
             <Progress 
               value={activeStats.percentage} 
-              className="h-4 rounded-full bg-slate-100 dark:bg-slate-800"
+              className="h-6 rounded-full bg-slate-100 dark:bg-slate-800"
               indicatorClassName={activeUserTheme.bg}
             />
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg shadow-slate-500/5">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-400">
-            <Trophy className="h-4 w-4 text-amber-500" />
-            Team Standings
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {allUserStats.map((stat, index) => {
-            const userTheme = USER_COLORS[stat.name as TaskUser];
-            return (
-              <div key={stat.name} className="flex items-center justify-between gap-3 group">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs shadow-sm transition-transform group-hover:scale-110",
-                    index === 0 && stat.total > 0 ? "bg-amber-100 text-amber-600 ring-2 ring-amber-200" : "bg-slate-100 text-slate-500 dark:bg-slate-800"
-                  )}>
-                    {index === 0 && stat.total > 0 ? <Star className="h-3 w-3" /> : index + 1}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className={cn(
-                        "text-sm font-bold",
-                        stat.name === activeUser && "underline underline-offset-4 decoration-2",
-                        stat.name === activeUser && userTheme.text
-                      )}>
-                        {stat.name}
-                      </p>
-                      {stat.streak > 0 && (
-                        <div className="flex items-center gap-0.5 text-[10px] text-orange-500 font-bold">
-                          <Flame className="h-3 w-3 fill-current" />
-                          {stat.streak}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground font-semibold">
-                      {stat.completed}/{stat.total} completed
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <span className={cn("text-sm font-black tabular-nums", stat.name === activeUser && userTheme.text)}>
-                      {stat.percentage}%
-                    </span>
-                  </div>
-                  {index === 0 && stat.percentage > 0 && stat.total > 0 && (
-                    <Flame className="h-4 w-4 text-orange-500 animate-bounce" />
-                  )}
-                </div>
-              </div>
-            );
-          })}
         </CardContent>
       </Card>
     </div>
