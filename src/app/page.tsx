@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -67,6 +68,13 @@ export default function Home() {
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
+
+  // Automatically switch to dark mode for Owen
+  React.useEffect(() => {
+    if (activeUser === 'Owen') {
+      setIsDarkMode(true);
+    }
+  }, [activeUser]);
 
   React.useEffect(() => {
     if (isDarkMode) {
