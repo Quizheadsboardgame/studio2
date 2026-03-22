@@ -9,7 +9,7 @@ import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { TaskDiaryView } from "@/components/task-diary-view";
 import { UserStats } from "@/components/user-stats";
-import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab, TaskUser } from "@/types/task";
+import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -112,9 +112,7 @@ export default function Home() {
     );
   }
 
-  const pageGradient = activeUser === 'Owen' 
-    ? "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-50 to-white dark:from-blue-950 dark:via-slate-950 dark:to-black"
-    : "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-50 to-white dark:from-emerald-950 dark:via-slate-950 dark:to-black";
+  const pageGradient = "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-50 to-white dark:from-blue-950 dark:via-slate-950 dark:to-black";
 
   return (
     <div className={cn(
@@ -189,7 +187,7 @@ export default function Home() {
 
         <div className="flex flex-col items-center mb-12">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-sm">
-            <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
+            <TabsList className="grid w-full grid-cols-1 h-14 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
               {USER_OPTIONS.map((userName) => {
                 const count = userCounts[userName] || 0;
                 const isActive = activeUser === userName;
@@ -199,9 +197,7 @@ export default function Home() {
                     key={userName} 
                     value={userName}
                     className={cn(
-                      "relative rounded-xl font-black uppercase tracking-[0.2em] transition-all h-12 text-[10px]",
-                      userName === 'Owen' && "data-[state=active]:bg-blue-900 data-[state=active]:text-white shadow-blue-900/20",
-                      userName === 'Lucy' && "data-[state=active]:bg-emerald-900 data-[state=active]:text-white shadow-emerald-900/20"
+                      "relative rounded-xl font-black uppercase tracking-[0.2em] transition-all h-12 text-[10px] data-[state=active]:bg-blue-900 data-[state=active]:text-white shadow-blue-900/20"
                     )}
                   >
                     <div className="flex flex-col items-center justify-center">
@@ -209,10 +205,8 @@ export default function Home() {
                     </div>
                     {count > 0 && (
                       <span className={cn(
-                        "absolute -top-1 -right-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-lg text-[9px] font-black border",
-                        isActive ? "bg-white text-slate-900 border-white" : "bg-slate-900 text-white border-slate-700",
-                        isActive && userName === 'Owen' && "text-blue-950",
-                        isActive && userName === 'Lucy' && "text-emerald-950"
+                        "absolute -top-1 -right-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-lg text-[9px] font-black border bg-slate-900 text-white border-slate-700",
+                        isActive && "bg-white text-blue-950 border-white"
                       )}>
                         {count}
                       </span>

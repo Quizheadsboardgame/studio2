@@ -16,7 +16,7 @@ interface UserStatsProps {
 }
 
 const USER_COLORS = {
-  'Owen': {
+  'Daily chart': {
     bg: 'bg-blue-900',
     text: 'text-blue-900',
     border: 'border-blue-200/50',

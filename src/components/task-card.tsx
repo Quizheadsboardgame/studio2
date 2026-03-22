@@ -5,7 +5,7 @@ import { Task } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check, CalendarPlus, UserPen, Info } from "lucide-react";
+import { Trash2, Edit2, Calendar, MoreVertical, CheckCircle2, Clock, AlertCircle, Repeat, Check, CalendarPlus, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, parseISO } from 'date-fns';
@@ -18,10 +18,6 @@ interface TaskCardProps {
   onMoveDate: (id: string) => void;
   isBoard?: boolean;
 }
-
-const USER_THEMES = {
-  'Owen': 'text-blue-900 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300'
-};
 
 export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, isBoard }: TaskCardProps) {
   const [todayStr, setTodayStr] = React.useState<string | null>(null);
@@ -104,9 +100,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
     }
   }, [task.dueDate]);
 
-  const showCreator = task.createdBy && task.createdBy !== task.owner;
-  const creatorTheme = showCreator ? USER_THEMES[task.createdBy as keyof typeof USER_THEMES] : '';
-
   const timeDisplay = React.useMemo(() => {
     if (!task.startTime) return null;
     if (!task.endTime) return task.startTime;
@@ -179,15 +172,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                     <Repeat className={cn("h-3 w-3", isUrgent ? "text-white/80" : "text-blue-500")} title={`Recurring: ${task.recurrence}`} />
                   )}
                 </div>
-                {showCreator && (
-                  <div className={cn(
-                    "flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full border w-fit",
-                    isUrgent ? "bg-white/20 border-white/30 text-white" : creatorTheme
-                  )}>
-                    <UserPen className="h-2.5 w-2.5" />
-                    <span className="text-[9px] font-bold">From {task.createdBy}</span>
-                  </div>
-                )}
                 {task.notes && (
                   <p className={cn(
                     "text-xs line-clamp-2 mt-2 leading-relaxed",

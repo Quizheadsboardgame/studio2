@@ -4,25 +4,23 @@ import * as React from "react";
 import { Task, USER_OPTIONS } from "@/types/task";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
   AreaChart,
-  Area
+  Area,
+  XAxis,
+  YAxis
 } from "recharts";
-import { format, subDays, parseISO, isSameDay } from "date-fns";
-import { TrendingUp, BarChart3 } from "lucide-react";
+import { format, subDays } from "date-fns";
+import { TrendingUp } from "lucide-react";
 
 interface ProductivityInsightsProps {
   tasks: Task[];
 }
 
 const COLORS = {
-  'Owen': '#1e3a8a' // Blue-900
+  'Daily chart': '#1e3a8a'
 };
 
 export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
@@ -36,7 +34,6 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
       USER_OPTIONS.forEach(user => {
         const userTasks = tasks.filter(t => t.owner === user && t.dueDate === dateStr);
         const completed = userTasks.filter(t => t.status === 'Completed').length;
-        // completion % for that day
         dayStats[user] = userTasks.length > 0 ? Math.round((completed / userTasks.length) * 100) : 0;
       });
       
@@ -51,7 +48,7 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-slate-600 dark:text-slate-400">
           <TrendingUp className="h-4 w-4 text-blue-500" />
-          7-Day Team Momentum
+          7-Day Momentum
         </CardTitle>
       </CardHeader>
       <CardContent className="h-[240px] pt-4 pr-4">
@@ -59,7 +56,7 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
           <AreaChart data={chartData}>
             <defs>
               {USER_OPTIONS.map(user => (
-                <linearGradient key={user} id={`color${user}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient key={user} id={`color${user.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={COLORS[user as keyof typeof COLORS]} stopOpacity={0.1}/>
                   <stop offset="95%" stopColor={COLORS[user as keyof typeof COLORS]} stopOpacity={0}/>
                 </linearGradient>
@@ -102,7 +99,7 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
                 stroke={COLORS[user as keyof typeof COLORS]}
                 strokeWidth={3}
                 fillOpacity={1}
-                fill={`url(#color${user})`}
+                fill={`url(#color${user.replace(/\s+/g, '')})`}
                 animationDuration={1500}
               />
             ))}

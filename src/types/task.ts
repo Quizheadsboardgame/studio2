@@ -1,7 +1,7 @@
 export type TaskStatus = 'Incomplete' | 'Awaiting Information' | 'Follow up Required' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskTab = 'Today' | 'Tomorrow' | 'Later';
-export type TaskUser = 'Owen';
+export type TaskUser = 'Daily chart';
 export type TaskRecurrence = 'None' | 'Daily' | 'Weekly' | 'Monthly' | 'Monday to Friday';
 
 export interface Task {
@@ -25,7 +25,7 @@ export interface Task {
 export const STATUS_OPTIONS: TaskStatus[] = ['Incomplete', 'Awaiting Information', 'Follow up Required', 'Completed'];
 export const PRIORITY_OPTIONS: TaskPriority[] = ['High', 'Medium', 'Low'];
 export const TAB_OPTIONS: TaskTab[] = ['Today', 'Tomorrow', 'Later'];
-export const USER_OPTIONS: TaskUser[] = ['Owen'];
+export const USER_OPTIONS: TaskUser[] = ['Daily chart'];
 export const RECURRENCE_OPTIONS: TaskRecurrence[] = ['None', 'Daily', 'Weekly', 'Monthly', 'Monday to Friday'];
 
 export const PRIORITY_ORDER: Record<TaskPriority, number> = {

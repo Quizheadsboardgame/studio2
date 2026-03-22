@@ -14,7 +14,7 @@ import {
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { addDays, addWeeks, addMonths, parseISO, format, getDay, subDays, isBefore, startOfDay } from 'date-fns';
+import { addDays, parseISO, format, getDay, addWeeks, addMonths } from 'date-fns';
 
 const isActioned = (status: TaskStatus) => status === 'Completed' || status === 'Awaiting Information';
 const isOutstanding = (status: TaskStatus) => status === 'Incomplete' || status === 'Follow up Required';
@@ -27,7 +27,7 @@ export function useTasks() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [activeTab, setActiveTab] = useState<TaskTab>('Today');
-  const [activeUser, setActiveUser] = useState<TaskUser>('Owen');
+  const [activeUser, setActiveUser] = useState<TaskUser>('Daily chart');
   const [viewMode, setViewMode] = useState<'list' | 'board' | 'diary'>('list');
   const [showPastCompleted, setShowPastCompleted] = useState(false);
 
@@ -153,7 +153,12 @@ export function useTasks() {
     if (!db || !user || !tasksQuery) return;
     const now = new Date().toISOString();
     if (updatedTask.id === 'new') {
-      const { id: _, ...data } = { ...updatedTask, updatedAt: now };
+      const { id: _, ...data } = { 
+        ...updatedTask, 
+        owner: 'Daily chart', // Force the owner to 'Daily chart'
+        createdBy: 'Daily chart',
+        updatedAt: now 
+      };
       addDocumentNonBlocking(tasksQuery, data);
     } else {
       updateDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', updatedTask.id), { ...updatedTask, updatedAt: now });
@@ -186,7 +191,6 @@ export function useTasks() {
     }
     updateDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', id), { status: newStatus, updatedAt: new Date().toISOString() });
     
-    // Auto-reload the page as requested
     setTimeout(() => {
       window.location.reload();
     }, 500);
