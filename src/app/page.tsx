@@ -132,11 +132,11 @@ export default function Home() {
                 className="object-contain relative z-10"
               />
             </div>
-            <div>
-              <h1 className="text-4xl font-black font-headline text-slate-900 dark:text-white tracking-tighter uppercase italic">
+            <div className="flex flex-col">
+              <h1 className="text-4xl font-black font-headline text-slate-900 dark:text-white tracking-tighter uppercase italic leading-none">
                 FocusFlow
               </h1>
-              <p className="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] mt-0.5">
+              <p className="text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-[0.22em] mt-1 whitespace-nowrap">
                 POWERED BY HARLEY: WORK SMARTER
               </p>
             </div>
