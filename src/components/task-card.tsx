@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -45,7 +46,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
   const isUrgent = isHighPriorityDueToday && task.status !== 'Awaiting Information';
 
   const priorityColor = {
-    High: "bg-red-100 text-red-700 border-red-200 dark:bg-red-700 dark:text-white dark:border-red-800",
+    High: isUrgent ? "bg-white text-red-700 dark:bg-white dark:text-red-700" : "bg-red-100 text-red-700 border-red-200 dark:bg-red-700 dark:text-white dark:border-red-800",
     Medium: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
     Low: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
   }[task.priority];
@@ -57,7 +58,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
       : task.status === 'Follow up Required'
         ? <AlertCircle className="w-4 h-4 text-blue-500" />
         : isUrgent 
-          ? <AlertCircle className="w-4 h-4 text-destructive dark:text-white animate-pulse" />
+          ? <AlertCircle className="w-4 h-4 text-white animate-pulse" />
           : <Clock className="w-4 h-4 text-muted-foreground" />;
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -159,7 +160,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
             : task.status === 'Awaiting Information'
               ? "border-orange-200 bg-orange-50/50 dark:bg-orange-950/10 shadow-sm"
               : isUrgent
-                ? "border-destructive bg-red-50/50 dark:bg-red-600 dark:border-red-500 shadow-sm" 
+                ? "border-red-600 bg-red-600 text-white dark:bg-red-700 dark:border-red-500 shadow-xl scale-[1.02]" 
                 : "border-transparent"
         )}
       >
@@ -172,7 +173,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                   <h3 className={cn(
                     "text-sm font-bold truncate",
                     task.status === 'Completed' && "line-through text-muted-foreground font-medium",
-                    isUrgent && "text-destructive dark:text-white"
+                    isUrgent && "text-white"
                   )}>
                     {task.name}
                   </h3>
@@ -183,7 +184,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                 {showCreator && (
                   <div className={cn(
                     "flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full border w-fit",
-                    creatorTheme
+                    isUrgent ? "bg-white/20 border-white/30 text-white" : creatorTheme
                   )}>
                     <UserPen className="h-2.5 w-2.5" />
                     <span className="text-[9px] font-bold">From {task.createdBy}</span>
@@ -192,7 +193,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                 {task.notes && (
                   <p className={cn(
                     "text-xs line-clamp-2 mt-2 leading-relaxed",
-                    isUrgent ? "text-red-900/80 dark:text-white/90" : "text-muted-foreground"
+                    isUrgent ? "text-white/90" : "text-muted-foreground"
                   )}>
                     {task.notes}
                   </p>
@@ -207,8 +208,8 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onMoveDate, i
                     variant="ghost" 
                     size="icon" 
                     className={cn(
-                      "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
-                      isUrgent && "text-white hover:bg-white/10"
+                      "h-8 w-8",
+                      isUrgent ? "text-white hover:bg-white/10" : "opacity-0 group-hover:opacity-100 transition-opacity"
                     )}
                   >
                     <MoreVertical className="h-4 w-4" />

@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    // Allow the specific Cloud Workstation domain to prevent ChunkLoadErrors during development
+    allowedDevOrigins: ['6000-firebase-studio-1773184680842.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev'],
+  },
   images: {
     remotePatterns: [
       {
