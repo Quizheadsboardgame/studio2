@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -7,13 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Flame, Zap, Play, Pause, RotateCcw, Timer, Quote, ShieldCheck } from "lucide-react";
+import { Play, Pause, RotateCcw, Timer, Quote, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserStatsProps {
   activeUser: TaskUser;
-  streaks: Record<string, number>;
   progress: Record<string, { completed: number, total: number, percentage: number, remaining: number }>;
 }
 
@@ -51,7 +49,7 @@ const MOTIVATIONAL_QUOTES = [
   "Success is the sum of small efforts, repeated day in and day out."
 ];
 
-export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
+export function UserStats({ activeUser, progress }: UserStatsProps) {
   const activeStats = progress[activeUser] || { completed: 0, total: 0, percentage: 100, remaining: 0 };
   const activeUserTheme = USER_COLORS[activeUser];
   const { toast } = useToast();
@@ -135,13 +133,8 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                     <ShieldCheck className={cn("h-10 w-10 relative z-10", activeUserTheme.text)} />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-black font-headline tracking-tighter uppercase flex items-center gap-3">
+                    <h2 className="text-3xl font-black font-headline tracking-tighter uppercase">
                       {activeUser}
-                      {streaks[activeUser] > 0 && (
-                        <span className="flex items-center gap-1.5 text-[9px] bg-orange-500 text-white px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] shadow-lg shadow-orange-500/20">
-                          <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]}D STREAK
-                        </span>
-                      )}
                     </h2>
                     <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.3em] mt-1 opacity-60">
                       Daily Completion: {activeStats.percentage}%

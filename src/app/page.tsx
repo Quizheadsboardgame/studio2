@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -26,8 +25,7 @@ import {
   Loader2,
   RefreshCw,
   LogOut,
-  History,
-  Flame
+  History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,7 +40,6 @@ export default function Home() {
     filteredTasks,
     tabCounts,
     userCounts,
-    userStreaks,
     userProgress,
     isLoaded,
     searchQuery,
@@ -188,7 +185,6 @@ export default function Home() {
 
         <UserStats 
           activeUser={activeUser} 
-          streaks={userStreaks} 
           progress={userProgress} 
         />
 
@@ -197,7 +193,6 @@ export default function Home() {
             <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
               {USER_OPTIONS.map((userName) => {
                 const count = userCounts[userName] || 0;
-                const streak = userStreaks[userName] || 0;
                 const isActive = activeUser === userName;
                 
                 return (
@@ -212,14 +207,6 @@ export default function Home() {
                   >
                     <div className="flex flex-col items-center justify-center">
                       <span>{userName}</span>
-                      {streak > 0 && (
-                        <span className={cn(
-                          "text-[8px] flex items-center gap-0.5 mt-0.5",
-                          isActive ? "text-white/80" : "text-orange-500"
-                        )}>
-                          <Flame className="h-2 w-2 fill-current" /> {streak}d
-                        </span>
-                      )}
                     </div>
                     {count > 0 && (
                       <span className={cn(

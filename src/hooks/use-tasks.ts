@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -16,8 +15,6 @@ import {
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { addDays, addWeeks, addMonths, parseISO, format, getDay, subDays, isBefore, startOfDay } from 'date-fns';
-
-const STREAK_START_DATE = '2026-03-11';
 
 const isActioned = (status: TaskStatus) => status === 'Completed' || status === 'Awaiting Information';
 const isOutstanding = (status: TaskStatus) => status === 'Incomplete' || status === 'Follow up Required';
@@ -87,11 +84,10 @@ export function useTasks() {
   }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
   const stats = useMemo(() => {
-    if (!todayStr) return { tabCounts: {}, userCounts: {}, userStreaks: {}, userProgress: {} };
+    if (!todayStr) return { tabCounts: {}, userCounts: {}, userProgress: {} };
 
     const tabCounts: Record<string, number> = {};
     const userCounts: Record<string, number> = {};
-    const userStreaks: Record<string, number> = {};
     const userProgress: Record<string, any> = {};
 
     const tasksByUser = tasks.reduce((acc, t) => {
@@ -124,38 +120,9 @@ export function useTasks() {
         percentage: total > 0 ? Math.round((actionedCount / total) * 100) : 100,
         remaining: workloadToday.filter(t => isOutstanding(t.status)).length
       };
-
-      let streak = 0;
-      const startDate = parseISO(STREAK_START_DATE);
-      const todayObj = startOfDay(new Date());
-      let offset = 1;
-      let daysChecked = 0;
-      
-      while (daysChecked < 30) {
-        const checkDate = subDays(todayObj, offset);
-        if (isBefore(checkDate, startDate)) break;
-        
-        const dayOfWeek = getDay(checkDate);
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) { 
-          const dateStr = format(checkDate, 'yyyy-MM-dd');
-          const dayTasks = userTasks.filter(t => t.dueDate === dateStr);
-          if (dayTasks.length === 0 || dayTasks.every(t => isActioned(t.status))) {
-            streak++;
-          } else {
-            break;
-          }
-        }
-        offset++;
-        daysChecked++;
-      }
-      
-      if (userProgress[userName].total > 0 && userProgress[userName].remaining === 0) {
-        streak++;
-      }
-      userStreaks[userName] = streak;
     });
 
-    return { tabCounts, userCounts, userStreaks, userProgress };
+    return { tabCounts, userCounts, userProgress };
   }, [tasks, activeUser, todayStr]);
 
   const filteredTasks = useMemo(() => {
@@ -248,7 +215,6 @@ export function useTasks() {
     tasks, filteredTasks,
     tabCounts: stats.tabCounts,
     userCounts: stats.userCounts,
-    userStreaks: stats.userStreaks,
     userProgress: stats.userProgress,
     isLoaded: !isUserLoading && !isTasksLoading && todayStr !== '',
     searchQuery, setSearchQuery,
