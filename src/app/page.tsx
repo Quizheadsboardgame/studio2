@@ -181,7 +181,7 @@ export default function Home() {
               onClick={handleCreateNewTask}
               className="bg-slate-900 dark:bg-blue-600 hover:scale-105 active:scale-95 text-white font-black uppercase tracking-widest text-xs rounded-xl px-8 h-10 shadow-xl shadow-blue-500/20 transition-all"
             >
-              <Plus className="h-4 w-4 mr-2" /> New Node
+              <Plus className="h-4 w-4 mr-2" /> New Task
             </Button>
           </div>
         </header>
@@ -242,7 +242,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2 px-1">
-                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-blue-500 dark:text-blue-400">Temporal Frames</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-blue-500 dark:text-blue-400">Categories</span>
               </div>
               <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl inline-flex items-center">
                 {TAB_OPTIONS.map((tab) => {
@@ -277,21 +277,21 @@ export default function Home() {
             <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center h-12">
               <button 
                 onClick={() => setViewMode('list')}
-                title="Protocol List"
+                title="List View"
                 className={cn("p-2.5 rounded-xl transition-all", viewMode === 'list' ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
               >
                 <LayoutList className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('board')}
-                title="Strategic Board"
+                title="Board View"
                 className={cn("p-2.5 rounded-xl transition-all", viewMode === 'board' ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
               >
                 <LayoutGrid className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('diary')}
-                title="Temporal Chronicle"
+                title="Calendar View"
                 className={cn("p-2.5 rounded-xl transition-all", viewMode === 'diary' ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
               >
                 <CalendarRange className="h-5 w-5" />
@@ -304,7 +304,7 @@ export default function Home() {
               <div className="relative w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
-                  placeholder="Query system nodes..." 
+                  placeholder="Search tasks..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12 h-12 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-2xl text-[13px] font-medium"
@@ -315,11 +315,11 @@ export default function Home() {
                   <SelectTrigger className="h-12 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-2xl md:min-w-[180px] text-[11px] font-black uppercase tracking-widest">
                     <div className="flex items-center gap-2">
                       <Filter className="h-3.5 w-3.5 text-blue-500" />
-                      <SelectValue placeholder="System Filter" />
+                      <SelectValue placeholder="Status Filter" />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Protocols</SelectItem>
+                    <SelectItem value="All">All Statuses</SelectItem>
                     {STATUS_OPTIONS.map((opt) => (
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
@@ -335,7 +335,7 @@ export default function Home() {
                   )}
                 >
                   <History className="h-4 w-4 mr-2" />
-                  {showPastCompleted ? "Purge Archive" : "Access Archive"}
+                  {showPastCompleted ? "Hide Past Tasks" : "Show Past Tasks"}
                 </Button>
               </div>
             </div>

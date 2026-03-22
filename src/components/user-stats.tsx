@@ -144,7 +144,7 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                       )}
                     </h2>
                     <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.3em] mt-1 opacity-60">
-                      System Node Efficiency: {activeStats.percentage}%
+                      Daily Completion: {activeStats.percentage}%
                     </p>
                   </div>
                 </div>
@@ -162,7 +162,7 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                 />
                 <div className="flex justify-between items-center px-1">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    Protocol Progress: {activeStats.completed} / {activeStats.total} Actions
+                    Tasks Progress: {activeStats.completed} / {activeStats.total} completed
                   </span>
                   <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">
                     Optimized
@@ -176,7 +176,7 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
             )}>
               <div className="flex items-center gap-2 mb-1">
                 <Timer className={cn("h-5 w-5", activeUserTheme.text)} />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Focus State</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Focus Timer</h3>
               </div>
               
               <div className="text-5xl font-black tracking-tighter font-headline tabular-nums text-slate-900 dark:text-white">
@@ -196,7 +196,7 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                   className={cn("flex-1 h-12 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg", activeUserTheme.button)}
                 >
                   {isTimerActive ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-                  {isTimerActive ? "Suspend" : "Initialize"}
+                  {isTimerActive ? "Pause" : "Start"}
                 </Button>
                 <Button 
                   variant="outline" 
