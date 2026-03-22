@@ -126,7 +126,7 @@ export default function Home() {
             <div className="relative h-32 w-32 group">
               <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full group-hover:bg-blue-500/40 transition-all duration-500"></div>
               <Image 
-                src="https://i.ibb.co/JRjVVRn0/Untitled-4.png" 
+                src="https://i.ibb.co/Mx9psPGZ/Untitled-4.png" 
                 alt="Harley Logo" 
                 fill 
                 className="object-contain relative z-10"
@@ -354,11 +354,12 @@ export default function Home() {
       <footer className="w-full bg-black py-16 border-t border-white/5 relative z-20">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="relative h-40 w-96 opacity-90 hover:opacity-100 transition-opacity duration-500">
+            <div className="absolute inset-0 bg-blue-500/30 blur-3xl rounded-full"></div>
             <Image 
-              src="https://i.ibb.co/JRjVVRn0/Untitled-4.png" 
+              src="https://i.ibb.co/Mx9psPGZ/Untitled-4.png" 
               alt="Harley Tech Logo" 
               fill 
-              className="object-contain"
+              className="object-contain relative z-10"
             />
           </div>
           <div className="flex flex-col items-center md:items-end gap-1 text-center md:text-right">
@@ -369,7 +370,7 @@ export default function Home() {
               <span className="text-blue-500">HARLEY</span>
             </p>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">
-              2026 SMART HARLEY TECH
+              2026 SMART HARLEY TECH. Softwear powered by harley
             </p>
           </div>
         </div>
