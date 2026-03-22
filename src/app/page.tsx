@@ -359,21 +359,21 @@ export default function Home() {
       </div>
 
       <footer className="w-full bg-black py-16 border-t border-white/5 relative z-20">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-6">
-          <div className="relative h-20 w-48 opacity-80 hover:opacity-100 transition-opacity duration-500 cursor-pointer">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-8">
+          <div className="relative h-40 w-96 opacity-90 hover:opacity-100 transition-opacity duration-500">
             <Image 
               src="https://i.ibb.co/RG9zRtRS/IMG-3055.jpg" 
-              alt="IMG 3055" 
+              alt="Harley Tech Logo" 
               fill 
               className="object-contain"
             />
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">
-              © {new Date().getFullYear()} FocusFlow Systems
+          <div className="flex flex-col items-center gap-2 text-center">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+              2026 Smart Harley Tech
             </p>
-            <p className="text-[8px] font-bold text-slate-700 uppercase tracking-[0.2em]">
-              Hardware & Software Integrated
+            <p className="text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+              Softwear powered by harley
             </p>
           </div>
         </div>
