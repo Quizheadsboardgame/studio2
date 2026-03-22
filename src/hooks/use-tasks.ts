@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -93,7 +94,6 @@ export function useTasks() {
     const userStreaks: Record<string, number> = {};
     const userProgress: Record<string, any> = {};
 
-    // Efficiency: Pre-filter tasks by user once
     const tasksByUser = tasks.reduce((acc, t) => {
       if (!acc[t.owner]) acc[t.owner] = [];
       acc[t.owner].push(t);
@@ -131,7 +131,7 @@ export function useTasks() {
       let offset = 1;
       let daysChecked = 0;
       
-      while (daysChecked < 30) { // Reduced window for performance while maintaining accuracy
+      while (daysChecked < 30) {
         const checkDate = subDays(todayObj, offset);
         if (isBefore(checkDate, startDate)) break;
         
@@ -218,6 +218,11 @@ export function useTasks() {
       }
     }
     updateDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', id), { status: newStatus, updatedAt: new Date().toISOString() });
+    
+    // Auto-reload the page as requested
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   const moveTaskDate = (id: string) => {

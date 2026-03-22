@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Flame, Zap, Play, Pause, RotateCcw, Timer } from "lucide-react";
+import { Flame, Zap, Play, Pause, RotateCcw, Timer, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,6 +38,19 @@ const USER_COLORS = {
   }
 };
 
+const MOTIVATIONAL_QUOTES = [
+  "The only way to do great work is to love what you do.",
+  "Don't count the days, make the days count.",
+  "The secret of getting ahead is getting started.",
+  "Your time is limited, don't waste it living someone else's life.",
+  "Focus on being productive instead of busy.",
+  "Action is the foundational key to all success.",
+  "The future depends on what you do today.",
+  "Dream big. Start small. But most of all, start.",
+  "Efficiency is doing things right; effectiveness is doing the right things.",
+  "Success is the sum of small efforts, repeated day in and day out."
+];
+
 export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
   const activeStats = progress[activeUser] || { completed: 0, total: 0, percentage: 100, remaining: 0 };
   const activeUserTheme = USER_COLORS[activeUser];
@@ -48,6 +61,10 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
   const [timeLeft, setTimeLeft] = React.useState(25 * 60);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
 
+  // Motivational Quote State
+  const [quoteIndex, setQuoteIndex] = React.useState(0);
+
+  // Handle Timer
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isTimerActive && timeLeft > 0) {
@@ -65,6 +82,15 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
       if (interval) clearInterval(interval);
     };
   }, [isTimerActive, timeLeft, toast]);
+
+  // Handle Quote Rotation (Every 2 minutes)
+  React.useEffect(() => {
+    const quoteInterval = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % MOTIVATIONAL_QUOTES.length);
+    }, 120000); // 120,000ms = 2 minutes
+
+    return () => clearInterval(quoteInterval);
+  }, []);
 
   const toggleTimer = () => {
     if (!isTimerActive && timeLeft === 0) {
@@ -157,9 +183,9 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
               </div>
             </div>
 
-            {/* Focus Timer Widget */}
+            {/* Focus Timer & Quotes Widget */}
             <div className={cn(
-              "p-6 rounded-2xl border flex flex-col items-center justify-center space-y-4",
+              "p-6 rounded-2xl border flex flex-col items-center justify-center space-y-4 min-h-[220px]",
               activeUserTheme.soft,
               "border-slate-100 dark:border-slate-800"
             )}>
@@ -196,7 +222,15 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Set minutes and start flowing</p>
+
+              {/* Rotating Quote Display */}
+              <div className="mt-4 px-4 py-3 bg-white/50 dark:bg-black/20 rounded-xl w-full text-center flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-1000" key={quoteIndex}>
+                <Quote className={cn("h-3 w-3 opacity-30", activeUserTheme.text)} />
+                <p className="text-[11px] font-bold italic leading-tight text-slate-700 dark:text-slate-300 max-w-[200px]">
+                  "{MOTIVATIONAL_QUOTES[quoteIndex]}"
+                </p>
+                <span className="text-[8px] uppercase tracking-widest font-black opacity-40 text-slate-400">Next inspiration in 2m</span>
+              </div>
             </div>
 
           </div>
