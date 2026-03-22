@@ -126,7 +126,7 @@ export default function Home() {
             <div className="relative h-32 w-32 group">
               <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full group-hover:bg-blue-500/40 transition-all duration-500"></div>
               <Image 
-                src="https://i.ibb.co/pr0G65L4/Untitled-2.png" 
+                src="https://i.ibb.co/JRjVVRn0/Untitled-4.png" 
                 alt="Harley Logo" 
                 fill 
                 className="object-contain relative z-10"
