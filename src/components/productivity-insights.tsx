@@ -22,8 +22,7 @@ interface ProductivityInsightsProps {
 }
 
 const COLORS = {
-  'Owen': '#1e3a8a', // Blue-900
-  'Lucy': '#064e3b'  // Emerald-900
+  'Owen': '#1e3a8a' // Blue-900
 };
 
 export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {

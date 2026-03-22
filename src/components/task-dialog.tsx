@@ -20,8 +20,7 @@ interface TaskDialogProps {
 }
 
 const USER_THEMES = {
-  'Owen': 'text-blue-900 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300',
-  'Lucy': 'text-emerald-900 bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300'
+  'Owen': 'text-blue-900 bg-blue-100 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300'
 };
 
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {

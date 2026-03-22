@@ -24,15 +24,6 @@ const USER_COLORS = {
     ring: 'ring-blue-300',
     soft: 'bg-blue-50/50 dark:bg-blue-950/20',
     button: 'bg-slate-900 dark:bg-blue-800 hover:bg-slate-800 dark:hover:bg-blue-700 text-white'
-  },
-  'Lucy': {
-    bg: 'bg-emerald-900',
-    text: 'text-emerald-900',
-    border: 'border-emerald-200/50',
-    shadow: 'shadow-emerald-900/10',
-    ring: 'ring-emerald-300',
-    soft: 'bg-emerald-50/50 dark:bg-emerald-950/20',
-    button: 'bg-slate-900 dark:bg-emerald-800 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white'
   }
 };
 
