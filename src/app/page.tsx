@@ -369,7 +369,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col items-center md:items-end gap-2 text-center md:text-right">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
-              2026 Smart Harley Tech
+              2026 Smart Harley Tech.
             </p>
             <p className="text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em]">
               Softwear powered by harley
