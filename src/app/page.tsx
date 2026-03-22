@@ -66,16 +66,10 @@ export default function Home() {
   } = useTasks();
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(false); // Starts in light mode
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
 
-  // Automatically switch to dark mode for Owen
-  React.useEffect(() => {
-    if (activeUser === 'Owen') {
-      setIsDarkMode(true);
-    }
-  }, [activeUser]);
-
+  // Sync dark mode class with state
   React.useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
