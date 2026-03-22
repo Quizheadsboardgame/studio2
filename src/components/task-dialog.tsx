@@ -46,16 +46,16 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden flex flex-col max-h-[90vh] border-none shadow-2xl">
-        <DialogHeader className="p-6 pb-4 border-b bg-slate-50/50 dark:bg-slate-900/50">
+      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden flex flex-col max-h-[90vh] border-none shadow-2xl bg-white dark:bg-slate-950">
+        <DialogHeader className="p-6 pb-4 border-b bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tight">
             {isCompleted ? <CheckCircle2 className="text-green-500 h-6 w-6" /> : isAwaiting ? <Info className="text-orange-500 h-6 w-6" /> : <Clock className="text-blue-500 h-6 w-6" />}
             {task?.id === 'new' ? 'Create New Task' : 'Task Details'}
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1">
-          <div className="p-8 space-y-8">
+        <ScrollArea className="flex-1 w-full overflow-y-auto">
+          <div className="p-6 md:p-8 space-y-8">
             <div className="grid gap-3">
               <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Task Name</Label>
               <Input
@@ -63,7 +63,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                 placeholder="What needs to be done?"
                 value={activeData.name || ""}
                 onChange={(e) => setFormData({ ...activeData, name: e.target.value })}
-                className={cn("text-xl font-bold h-14 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 focus-visible:ring-blue-500 rounded-2xl shadow-sm", isCompleted && "line-through text-muted-foreground")}
+                className={cn("text-lg md:text-xl font-bold h-14 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 focus-visible:ring-blue-500 rounded-2xl shadow-sm", isCompleted && "line-through text-muted-foreground")}
               />
             </div>
 
@@ -124,18 +124,18 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+              <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-100 dark:border-slate-800">
                 <div className="grid gap-1.5">
                   <Label htmlFor="startTime" className="text-[9px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Clock className="h-2.5 w-2.5" /> Start
                   </Label>
-                  <Input id="startTime" type="time" value={activeData.startTime || ""} onChange={(e) => setFormData({ ...activeData, startTime: e.target.value })} className="h-9 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs" />
+                  <Input id="startTime" type="time" value={activeData.startTime || ""} onChange={(e) => setFormData({ ...activeData, startTime: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs" />
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="endTime" className="text-[9px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Clock className="h-2.5 w-2.5" /> Finish
                   </Label>
-                  <Input id="endTime" type="time" value={activeData.endTime || ""} onChange={(e) => setFormData({ ...activeData, endTime: e.target.value })} className="h-9 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs" />
+                  <Input id="endTime" type="time" value={activeData.endTime || ""} onChange={(e) => setFormData({ ...activeData, endTime: e.target.value })} className="h-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs" />
                 </div>
               </div>
             </div>
@@ -154,11 +154,13 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
           </div>
         </ScrollArea>
         
-        <DialogFooter className="bg-slate-50 dark:bg-slate-900/50 p-6 border-t mt-auto">
-          <Button variant="ghost" size="lg" onClick={onClose} className="font-black uppercase tracking-widest text-xs rounded-full px-8">Cancel</Button>
-          <Button onClick={handleSave} className="bg-slate-900 dark:bg-blue-600 hover:scale-105 active:scale-95 text-white font-black uppercase tracking-widest rounded-full px-12 h-14 shadow-xl shadow-blue-500/20 text-sm transition-all">
-            {task?.id === 'new' ? 'Create Task' : 'Update Task'}
-          </Button>
+        <DialogFooter className="bg-slate-50 dark:bg-slate-900/50 p-6 border-t shrink-0">
+          <div className="flex w-full items-center justify-end gap-3">
+            <Button variant="ghost" onClick={onClose} className="font-black uppercase tracking-widest text-xs rounded-full px-8">Cancel</Button>
+            <Button onClick={handleSave} className="bg-slate-900 dark:bg-blue-600 hover:scale-105 active:scale-95 text-white font-black uppercase tracking-widest rounded-full px-8 md:px-12 h-12 md:h-14 shadow-xl shadow-blue-500/20 text-xs md:text-sm transition-all">
+              {task?.id === 'new' ? 'Create Task' : 'Update Task'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
