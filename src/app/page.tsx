@@ -119,10 +119,10 @@ export default function Home() {
 
   return (
     <div className={cn(
-      "min-h-screen transition-colors duration-1000 font-body pb-20",
+      "min-h-screen transition-colors duration-1000 font-body flex flex-col",
       pageGradient
     )}>
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="max-w-7xl mx-auto px-6 py-10 flex-1 w-full">
         
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="flex items-center gap-6">
@@ -328,7 +328,7 @@ export default function Home() {
             </div>
           </div>
 
-          <main className="pt-6 min-h-[600px]">
+          <main className="pt-6 min-h-[600px] mb-20">
             {viewMode === 'list' ? (
               <TaskListView 
                 tasks={filteredTasks} 
@@ -357,6 +357,27 @@ export default function Home() {
           </main>
         </div>
       </div>
+
+      <footer className="w-full bg-black py-16 border-t border-white/5 relative z-20">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-6">
+          <div className="relative h-20 w-48 opacity-80 hover:opacity-100 transition-opacity duration-500 cursor-pointer">
+            <Image 
+              src="https://i.ibb.co/RG9zRtRS/IMG-3055.jpg" 
+              alt="IMG 3055" 
+              fill 
+              className="object-contain"
+            />
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">
+              © {new Date().getFullYear()} FocusFlow Systems
+            </p>
+            <p className="text-[8px] font-bold text-slate-700 uppercase tracking-[0.2em]">
+              Hardware & Software Integrated
+            </p>
+          </div>
+        </div>
+      </footer>
 
       <TaskDialog 
         key={editingTask?.id || 'none'}
