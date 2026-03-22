@@ -23,7 +23,6 @@ import {
   Moon, 
   Sun, 
   Filter,
-  CheckCircle2,
   Loader2,
   RefreshCw,
   LogOut,
@@ -34,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from "firebase/auth";
 import { addDays, format } from "date-fns";
+import Image from "next/image";
 
 export default function Home() {
   const { user } = useUser();
@@ -66,10 +66,9 @@ export default function Home() {
   } = useTasks();
 
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
-  const [isDarkMode, setIsDarkMode] = React.useState(false); // Starts in light mode
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
 
-  // Sync dark mode class with state
   React.useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -107,54 +106,66 @@ export default function Home() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-          <p className="text-sm font-medium text-slate-500 animate-pulse">Waking up FocusFlow...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <p className="text-sm font-bold text-blue-500/50 uppercase tracking-[0.2em] animate-pulse">Initializing Harley OS...</p>
         </div>
       </div>
     );
   }
 
-  const userBgTint = {
-    'Owen': 'bg-blue-950/5 dark:bg-blue-900/10',
-    'Lucy': 'bg-emerald-950/5 dark:bg-emerald-900/10'
-  }[activeUser];
+  // Gradient background based on active user
+  const pageGradient = activeUser === 'Owen' 
+    ? "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-50 to-white dark:from-blue-950 dark:via-slate-950 dark:to-black"
+    : "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-50 to-white dark:from-emerald-950 dark:via-slate-950 dark:to-black";
 
   return (
     <div className={cn(
-      "min-h-screen transition-all duration-700 font-body pb-20",
-      userBgTint || "bg-slate-50 dark:bg-slate-900"
+      "min-h-screen transition-colors duration-1000 font-body pb-20",
+      pageGradient
     )}>
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-          <div>
-            <h1 className="text-3xl font-bold font-headline text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <CheckCircle2 className="text-blue-600 h-8 w-8" />
-              FocusFlow
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Organize your time, master your tasks.</p>
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+          <div className="flex items-center gap-4">
+            <div className="relative h-16 w-16 group">
+              <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full group-hover:bg-blue-500/40 transition-all duration-500"></div>
+              <Image 
+                src="https://i.ibb.co/LWHWb1d/Untitled-2.png" 
+                alt="Harley Logo" 
+                fill 
+                className="object-contain relative z-10"
+              />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black font-headline text-slate-900 dark:text-white tracking-tighter uppercase italic">
+                FocusFlow
+              </h1>
+              <p className="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] mt-0.5">
+                POWERED BY HARLEY: WORK SMARTER
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {user?.isAnonymous === false ? (
-              <div className="flex items-center gap-2 mr-2">
-                <div className="flex flex-col items-end hidden sm:flex">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{user.email}</span>
-                  <span className="text-[10px] text-green-500 flex items-center gap-1"><RefreshCw className="h-3 w-3" /> Synced</span>
+              <div className="flex items-center gap-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-2xl border dark:border-slate-800">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{user.email}</span>
+                  <span className="text-[8px] text-blue-500 flex items-center gap-1 font-black uppercase tracking-widest"><RefreshCw className="h-2 w-2" /> Synced</span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => signOut(auth)} title="Log Out">
-                  <LogOut className="h-5 w-5" />
+                <Button variant="ghost" size="icon" onClick={() => signOut(auth)} className="h-8 w-8 hover:bg-red-500/10 hover:text-red-500">
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <Button 
                 variant="outline" 
                 onClick={() => setIsAuthOpen(true)}
-                className="rounded-full border-blue-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-slate-800"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md hover:bg-white dark:hover:bg-slate-900 transition-all font-bold text-xs uppercase tracking-widest"
               >
-                <RefreshCw className="h-4 w-4 mr-2" /> Sync Across Devices
+                <RefreshCw className="h-3.5 w-3.5 mr-2" /> Cloud Sync
               </Button>
             )}
 
@@ -162,15 +173,15 @@ export default function Home() {
               variant="outline" 
               size="icon" 
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="rounded-full h-10 w-10 shadow-sm"
+              className="rounded-xl h-10 w-10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border-slate-200 dark:border-slate-800 shadow-sm"
             >
-              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4 text-blue-600" />}
             </Button>
             <Button 
               onClick={handleCreateNewTask}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-6 shadow-lg shadow-blue-600/20"
+              className="bg-slate-900 dark:bg-blue-600 hover:scale-105 active:scale-95 text-white font-black uppercase tracking-widest text-xs rounded-xl px-8 h-10 shadow-xl shadow-blue-500/20 transition-all"
             >
-              <Plus className="h-5 w-5 mr-1" /> New Task
+              <Plus className="h-4 w-4 mr-2" /> New Node
             </Button>
           </div>
         </header>
@@ -181,9 +192,9 @@ export default function Home() {
           progress={userProgress} 
         />
 
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center mb-12">
           <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-sm">
-            <TabsList className="grid w-full grid-cols-2 h-16 p-1 bg-white dark:bg-slate-800 shadow-lg border dark:border-slate-700 rounded-2xl">
+            <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
               {USER_OPTIONS.map((userName) => {
                 const count = userCounts[userName] || 0;
                 const streak = userStreaks[userName] || 0;
@@ -194,28 +205,28 @@ export default function Home() {
                     key={userName} 
                     value={userName}
                     className={cn(
-                      "relative rounded-xl font-bold transition-all data-[state=active]:text-white h-14",
-                      userName === 'Owen' && "data-[state=active]:bg-blue-900",
-                      userName === 'Lucy' && "data-[state=active]:bg-emerald-900"
+                      "relative rounded-xl font-black uppercase tracking-[0.2em] transition-all h-12 text-[10px]",
+                      userName === 'Owen' && "data-[state=active]:bg-blue-900 data-[state=active]:text-white shadow-blue-900/20",
+                      userName === 'Lucy' && "data-[state=active]:bg-emerald-900 data-[state=active]:text-white shadow-emerald-900/20"
                     )}
                   >
-                    <div className="flex flex-col items-center justify-center gap-0">
-                      <span className="relative z-10 text-base">{userName}</span>
+                    <div className="flex flex-col items-center justify-center">
+                      <span>{userName}</span>
                       {streak > 0 && (
                         <span className={cn(
-                          "text-[10px] flex items-center gap-0.5",
-                          isActive ? "text-white" : "text-orange-500"
+                          "text-[8px] flex items-center gap-0.5 mt-0.5",
+                          isActive ? "text-white/80" : "text-orange-500"
                         )}>
-                          <Flame className="h-3 w-3 fill-current" /> {streak}d
+                          <Flame className="h-2 w-2 fill-current" /> {streak}d
                         </span>
                       )}
                     </div>
                     {count > 0 && (
                       <span className={cn(
-                        "absolute -top-2 -right-2 h-6 min-w-[24px] px-2 flex items-center justify-center rounded-full text-[11px] font-black border-2",
-                        isActive ? "bg-white border-white" : "bg-slate-900 text-white border-white dark:border-slate-800",
-                        isActive && userName === 'Owen' && "text-blue-900",
-                        isActive && userName === 'Lucy' && "text-emerald-900"
+                        "absolute -top-1 -right-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-lg text-[9px] font-black border",
+                        isActive ? "bg-white text-slate-900 border-white" : "bg-slate-900 text-white border-slate-700",
+                        isActive && userName === 'Owen' && "text-blue-950",
+                        isActive && userName === 'Lucy' && "text-emerald-950"
                       )}>
                         {count}
                       </span>
@@ -227,13 +238,13 @@ export default function Home() {
           </Tabs>
         </div>
 
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 px-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Time Frames</span>
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-blue-500 dark:text-blue-400">Temporal Frames</span>
               </div>
-              <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 inline-flex items-center gap-1">
+              <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl inline-flex items-center">
                 {TAB_OPTIONS.map((tab) => {
                   const count = tabCounts[tab] || 0;
                   const isActive = activeTab === tab && viewMode !== 'diary';
@@ -243,16 +254,16 @@ export default function Home() {
                       key={tab}
                       onClick={() => setActiveTab(tab)}
                       className={cn(
-                        "relative px-6 py-2.5 text-sm font-bold rounded-lg transition-all min-w-[110px]",
-                        isActive ? "bg-blue-600 text-white shadow-md scale-105" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50",
-                        viewMode === 'diary' && "opacity-50 cursor-not-allowed"
+                        "relative px-8 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all min-w-[120px]",
+                        isActive ? "bg-slate-900 dark:bg-blue-600 text-white shadow-lg scale-105 z-10" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white",
+                        viewMode === 'diary' && "opacity-30 cursor-not-allowed"
                       )}
                     >
                       <span>{tab}</span>
                       {count > 0 && (
                         <span className={cn(
-                          "absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full text-[10px] font-bold border-2",
-                          isActive ? "bg-white text-blue-600 border-blue-600" : "bg-blue-600 text-white border-white dark:border-slate-800"
+                          "absolute -top-1 -right-1 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-md text-[8px] font-black border",
+                          isActive ? "bg-white text-slate-900 border-white" : "bg-blue-600 text-white border-blue-400/20"
                         )}>
                           {count}
                         </span>
@@ -263,52 +274,52 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border dark:border-slate-700 flex items-center h-12">
+            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center h-12">
               <button 
                 onClick={() => setViewMode('list')}
-                title="List View"
-                className={cn("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
+                title="Protocol List"
+                className={cn("p-2.5 rounded-xl transition-all", viewMode === 'list' ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
               >
                 <LayoutList className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('board')}
-                title="Board View"
-                className={cn("p-2 rounded-lg transition-all", viewMode === 'board' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
+                title="Strategic Board"
+                className={cn("p-2.5 rounded-xl transition-all", viewMode === 'board' ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
               >
                 <LayoutGrid className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setViewMode('diary')}
-                title="Diary View"
-                className={cn("p-2 rounded-lg transition-all", viewMode === 'diary' ? "bg-slate-100 dark:bg-slate-700 text-blue-600" : "text-slate-400")}
+                title="Temporal Chronicle"
+                className={cn("p-2.5 rounded-xl transition-all", viewMode === 'diary' ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}
               >
                 <CalendarRange className="h-5 w-5" />
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex flex-1 flex-col md:flex-row items-center gap-3 w-full lg:max-w-3xl">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex flex-1 flex-col md:flex-row items-center gap-4 w-full lg:max-w-4xl">
               <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
-                  placeholder="Search tasks..." 
+                  placeholder="Query system nodes..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-11 bg-white dark:bg-slate-800 border-slate-200 rounded-xl"
+                  className="pl-12 h-12 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-2xl text-[13px] font-medium"
                 />
               </div>
-              <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="flex items-center gap-3 w-full md:w-auto">
                 <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val as any)}>
-                  <SelectTrigger className="h-11 bg-white dark:bg-slate-800 border-slate-200 rounded-xl md:min-w-[160px]">
+                  <SelectTrigger className="h-12 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-2xl md:min-w-[180px] text-[11px] font-black uppercase tracking-widest">
                     <div className="flex items-center gap-2">
-                      <Filter className="h-3.5 w-3.5 text-slate-400" />
-                      <SelectValue placeholder="All Status" />
+                      <Filter className="h-3.5 w-3.5 text-blue-500" />
+                      <SelectValue placeholder="System Filter" />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Status</SelectItem>
+                    <SelectItem value="All">All Protocols</SelectItem>
                     {STATUS_OPTIONS.map((opt) => (
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
@@ -319,18 +330,18 @@ export default function Home() {
                   variant="outline" 
                   onClick={() => setShowPastCompleted(!showPastCompleted)}
                   className={cn(
-                    "h-11 rounded-xl px-4",
-                    showPastCompleted ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600" : "bg-white dark:bg-slate-800"
+                    "h-12 rounded-2xl px-6 text-[10px] font-black uppercase tracking-widest",
+                    showPastCompleted ? "bg-blue-500 text-white border-blue-500 shadow-lg" : "bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200 dark:border-slate-800"
                   )}
                 >
                   <History className="h-4 w-4 mr-2" />
-                  {showPastCompleted ? "Hide Past Done" : "Show Past Done"}
+                  {showPastCompleted ? "Purge Archive" : "Access Archive"}
                 </Button>
               </div>
             </div>
           </div>
 
-          <main className="pt-4 min-h-[600px]">
+          <main className="pt-6 min-h-[600px]">
             {viewMode === 'list' ? (
               <TaskListView 
                 tasks={filteredTasks} 

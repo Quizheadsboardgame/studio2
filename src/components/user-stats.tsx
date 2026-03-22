@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Flame, Zap, Play, Pause, RotateCcw, Timer, Quote } from "lucide-react";
+import { Flame, Zap, Play, Pause, RotateCcw, Timer, Quote, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,20 +21,20 @@ const USER_COLORS = {
   'Owen': {
     bg: 'bg-blue-900',
     text: 'text-blue-900',
-    border: 'border-blue-200',
+    border: 'border-blue-200/50',
     shadow: 'shadow-blue-900/10',
     ring: 'ring-blue-300',
-    soft: 'bg-blue-50 dark:bg-blue-950/40',
-    button: 'bg-blue-900 hover:bg-blue-800 text-white'
+    soft: 'bg-blue-50/50 dark:bg-blue-950/20',
+    button: 'bg-slate-900 dark:bg-blue-800 hover:bg-slate-800 dark:hover:bg-blue-700 text-white'
   },
   'Lucy': {
     bg: 'bg-emerald-900',
     text: 'text-emerald-900',
-    border: 'border-emerald-200',
+    border: 'border-emerald-200/50',
     shadow: 'shadow-emerald-900/10',
     ring: 'ring-emerald-300',
-    soft: 'bg-emerald-50 dark:bg-emerald-950/40',
-    button: 'bg-emerald-900 hover:bg-emerald-800 text-white'
+    soft: 'bg-emerald-50/50 dark:bg-emerald-950/20',
+    button: 'bg-slate-900 dark:bg-emerald-800 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white'
   }
 };
 
@@ -56,15 +56,11 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
   const activeUserTheme = USER_COLORS[activeUser];
   const { toast } = useToast();
 
-  // Focus Timer State
   const [timerMinutes, setTimerMinutes] = React.useState("25");
   const [timeLeft, setTimeLeft] = React.useState(25 * 60);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
-
-  // Motivational Quote State
   const [quoteIndex, setQuoteIndex] = React.useState(0);
 
-  // Handle Timer
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isTimerActive && timeLeft > 0) {
@@ -74,8 +70,8 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
     } else if (timeLeft === 0 && isTimerActive) {
       setIsTimerActive(false);
       toast({
-        title: "Focus Time Complete!",
-        description: "Great job focusing! Take a well-deserved break.",
+        title: "Deep Work Complete",
+        description: "Focus session verified. Time for optimal recovery.",
       });
     }
     return () => {
@@ -83,12 +79,10 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
     };
   }, [isTimerActive, timeLeft, toast]);
 
-  // Handle Quote Rotation (Every 2 minutes)
   React.useEffect(() => {
     const quoteInterval = setInterval(() => {
       setQuoteIndex((prev) => (prev + 1) % MOTIVATIONAL_QUOTES.length);
-    }, 120000); // 120,000ms = 2 minutes
-
+    }, 120000);
     return () => clearInterval(quoteInterval);
   }, []);
 
@@ -121,80 +115,71 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const encouragingWords = React.useMemo(() => {
-    if (activeStats.total === 0) return "No tasks scheduled for today. Enjoy the clean slate!";
-    if (activeStats.percentage === 0) return "Let's kick things off! You've got this.";
-    if (activeStats.percentage < 40) return "Great start! Every small step counts.";
-    if (activeStats.percentage < 70) return "Over the hump! Keep that momentum building.";
-    if (activeStats.percentage < 100) return "Almost at the finish line! Stay focused.";
-    return "Legendary status! You've actioned everything for today!";
-  }, [activeStats]);
-
   return (
-    <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+    <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-1000">
       <Card className={cn(
-        "overflow-hidden border-2 shadow-xl transition-all duration-500",
-        activeUserTheme.border,
-        activeUserTheme.shadow,
-        "dark:border-slate-800 bg-white dark:bg-slate-900"
+        "overflow-hidden border border-slate-200/50 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-2xl transition-all duration-700 rounded-[2rem]",
+        activeUserTheme.shadow
       )}>
-        <CardContent className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <CardContent className="p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
             
-            {/* Progress Section */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-start gap-6">
+            <div className="lg:col-span-2 space-y-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                <div className="flex items-center gap-6">
                   <div className={cn(
-                    "h-16 w-16 rounded-2xl flex items-center justify-center shadow-inner",
+                    "h-20 w-20 rounded-3xl flex items-center justify-center shadow-inner relative overflow-hidden group",
                     activeUserTheme.soft
                   )}>
-                    <Flame className={cn("h-10 w-10", activeUserTheme.text, activeStats.percentage === 100 && activeStats.total > 0 && "animate-pulse")} />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+                    <ShieldCheck className={cn("h-10 w-10 relative z-10", activeUserTheme.text)} />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-3">
-                      {activeUser}'s Daily Progress
+                    <h2 className="text-3xl font-black font-headline tracking-tighter uppercase flex items-center gap-3">
+                      {activeUser}
                       {streaks[activeUser] > 0 && (
-                        <span className="flex items-center gap-1.5 text-xs bg-orange-100 text-orange-600 px-3 py-1 rounded-full dark:bg-orange-900/30 dark:text-orange-400 font-bold uppercase tracking-wider">
-                          <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]} Day Streak
+                        <span className="flex items-center gap-1.5 text-[9px] bg-orange-500 text-white px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] shadow-lg shadow-orange-500/20">
+                          <Zap className="h-3 w-3 fill-current" /> {streaks[activeUser]}D STREAK
                         </span>
                       )}
                     </h2>
-                    <p className="text-base text-muted-foreground font-medium mt-1">
-                      {encouragingWords}
+                    <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.3em] mt-1 opacity-60">
+                      System Node Efficiency: {activeStats.percentage}%
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={cn("text-5xl font-black tracking-tighter", activeUserTheme.text)}>
+                  <span className={cn("text-7xl font-black tracking-tighter font-headline", activeUserTheme.text)}>
                     {activeStats.percentage}%
                   </span>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">
-                    {activeStats.completed} out of {activeStats.total} tasks completed
-                  </p>
                 </div>
               </div>
-              <div className="relative pt-2">
+              <div className="space-y-3">
                 <Progress 
                   value={activeStats.percentage} 
-                  className="h-6 rounded-full bg-slate-100 dark:bg-slate-800"
-                  indicatorClassName={activeUserTheme.bg}
+                  className="h-4 rounded-full bg-slate-200 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50"
+                  indicatorClassName={cn(activeUserTheme.bg, "transition-all duration-1000 ease-out")}
                 />
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Protocol Progress: {activeStats.completed} / {activeStats.total} Actions
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                    Optimized
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Focus Timer & Quotes Widget */}
             <div className={cn(
-              "p-6 rounded-2xl border flex flex-col items-center justify-center space-y-4 min-h-[220px]",
-              activeUserTheme.soft,
-              "border-slate-100 dark:border-slate-800"
+              "p-8 rounded-[1.5rem] border border-slate-200/50 dark:border-slate-800/50 flex flex-col items-center justify-center space-y-5 bg-white/50 dark:bg-black/40 backdrop-blur-xl shadow-inner",
             )}>
               <div className="flex items-center gap-2 mb-1">
                 <Timer className={cn("h-5 w-5", activeUserTheme.text)} />
-                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">Focus Time</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Focus State</h3>
               </div>
               
-              <div className="text-4xl font-black tracking-tight font-mono tabular-nums">
+              <div className="text-5xl font-black tracking-tighter font-headline tabular-nums text-slate-900 dark:text-white">
                 {formatTime(timeLeft)}
               </div>
 
@@ -203,33 +188,32 @@ export function UserStats({ activeUser, streaks, progress }: UserStatsProps) {
                   type="number" 
                   value={timerMinutes} 
                   onChange={handleMinutesChange}
-                  className="w-16 h-10 text-center font-bold bg-white dark:bg-slate-800 border-slate-200"
+                  className="w-16 h-12 text-center font-black bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl"
                   disabled={isTimerActive}
                 />
                 <Button 
                   onClick={toggleTimer}
-                  className={cn("flex-1 h-10 font-bold rounded-lg", activeUserTheme.button)}
+                  className={cn("flex-1 h-12 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg", activeUserTheme.button)}
                 >
                   {isTimerActive ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-                  {isTimerActive ? "Pause" : "Start"}
+                  {isTimerActive ? "Suspend" : "Initialize"}
                 </Button>
                 <Button 
                   variant="outline" 
                   size="icon" 
                   onClick={resetTimer}
-                  className="h-10 w-10 bg-white dark:bg-slate-800"
+                  className="h-12 w-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </div>
 
-              {/* Rotating Quote Display */}
-              <div className="mt-4 px-4 py-3 bg-white/50 dark:bg-black/20 rounded-xl w-full text-center flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-1000" key={quoteIndex}>
-                <Quote className={cn("h-3 w-3 opacity-30", activeUserTheme.text)} />
-                <p className="text-[11px] font-bold italic leading-tight text-slate-700 dark:text-slate-300 max-w-[200px]">
+              <div className="mt-4 px-6 py-4 bg-slate-900/5 dark:bg-white/5 rounded-2xl w-full text-center flex flex-col items-center gap-3 border border-slate-100 dark:border-white/5 transition-all duration-1000" key={quoteIndex}>
+                <Quote className={cn("h-4 w-4 opacity-20", activeUserTheme.text)} />
+                <p className="text-[11px] font-bold italic leading-relaxed text-slate-700 dark:text-slate-300 max-w-[240px]">
                   "{MOTIVATIONAL_QUOTES[quoteIndex]}"
                 </p>
-                <span className="text-[8px] uppercase tracking-widest font-black opacity-40 text-slate-400">Next inspiration in 2m</span>
+                <div className="h-0.5 w-8 bg-blue-500/20 rounded-full"></div>
               </div>
             </div>
 
