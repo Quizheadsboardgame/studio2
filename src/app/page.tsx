@@ -112,7 +112,6 @@ export default function Home() {
     );
   }
 
-  // Gradient background based on active user
   const pageGradient = activeUser === 'Owen' 
     ? "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-50 to-white dark:from-blue-950 dark:via-slate-950 dark:to-black"
     : "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-50 to-white dark:from-emerald-950 dark:via-slate-950 dark:to-black";
@@ -359,7 +358,7 @@ export default function Home() {
       </div>
 
       <footer className="w-full bg-black py-16 border-t border-white/5 relative z-20">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-8">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="relative h-40 w-96 opacity-90 hover:opacity-100 transition-opacity duration-500">
             <Image 
               src="https://i.ibb.co/RG9zRtRS/IMG-3055.jpg" 
@@ -368,7 +367,7 @@ export default function Home() {
               className="object-contain"
             />
           </div>
-          <div className="flex flex-col items-center gap-2 text-center">
+          <div className="flex flex-col items-center md:items-end gap-2 text-center md:text-right">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
               2026 Smart Harley Tech
             </p>
