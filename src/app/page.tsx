@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -124,7 +125,7 @@ export default function Home() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="flex items-center gap-6">
             <div className="relative h-32 w-32 group">
-              <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full group-hover:bg-blue-500/40 transition-all duration-500"></div>
+              <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full animate-pulse-glow"></div>
               <Image 
                 src="https://i.ibb.co/Mx9psPGZ/Untitled-4.png" 
                 alt="Harley Logo" 
@@ -354,7 +355,7 @@ export default function Home() {
       <footer className="w-full bg-black py-16 border-t border-white/5 relative z-20">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="relative h-40 w-96 opacity-90 hover:opacity-100 transition-opacity duration-500">
-            <div className="absolute inset-0 bg-blue-500/30 blur-3xl rounded-full"></div>
+            <div className="absolute inset-0 bg-blue-500/30 blur-3xl rounded-full animate-pulse-glow"></div>
             <Image 
               src="https://i.ibb.co/Mx9psPGZ/Untitled-4.png" 
               alt="Harley Tech Logo" 
