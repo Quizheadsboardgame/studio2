@@ -355,18 +355,21 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="relative h-40 w-96 opacity-90 hover:opacity-100 transition-opacity duration-500">
             <Image 
-              src="https://i.ibb.co/RG9zRtRS/IMG-3055.jpg" 
+              src="https://i.ibb.co/JRjVVRn0/Untitled-4.png" 
               alt="Harley Tech Logo" 
               fill 
               className="object-contain"
             />
           </div>
-          <div className="flex flex-col items-center md:items-end gap-2 text-center md:text-right">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
-              2026 Smart Harley Tech.
+          <div className="flex flex-col items-center md:items-end gap-1 text-center md:text-right">
+            <p className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic">
+              <span className="text-white">WORK </span>
+              <span className="text-blue-500">SMART</span>
+              <span className="text-white"> WITH </span>
+              <span className="text-blue-500">HARLEY</span>
             </p>
-            <p className="text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em]">
-              Softwear powered by harley
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">
+              2026 SMART HARLEY TECH
             </p>
           </div>
         </div>
