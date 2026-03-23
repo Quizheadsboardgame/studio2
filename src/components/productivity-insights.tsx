@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Task, USER_OPTIONS } from "@/types/task";
+import { Task } from "@/types/task";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   CartesianGrid, 
@@ -17,13 +17,14 @@ import { TrendingUp } from "lucide-react";
 
 interface ProductivityInsightsProps {
   tasks: Task[];
+  profiles: string[];
 }
 
-const COLORS = {
-  'Daily chart': '#1e3a8a'
-};
+const COLORS = [
+  '#1e3a8a', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+];
 
-export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
+export function ProductivityInsights({ tasks, profiles }: ProductivityInsightsProps) {
   const chartData = React.useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = subDays(new Date(), 6 - i);
@@ -31,7 +32,7 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
       
       const dayStats: any = { name: format(date, 'EEE'), date: dateStr };
       
-      USER_OPTIONS.forEach(user => {
+      profiles.forEach(user => {
         const userTasks = tasks.filter(t => t.owner === user && t.dueDate === dateStr);
         const completed = userTasks.filter(t => t.status === 'Completed').length;
         dayStats[user] = userTasks.length > 0 ? Math.round((completed / userTasks.length) * 100) : 0;
@@ -41,7 +42,7 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
     });
     
     return last7Days;
-  }, [tasks]);
+  }, [tasks, profiles]);
 
   return (
     <Card className="border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg shadow-slate-500/5 overflow-hidden">
@@ -55,10 +56,10 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
             <defs>
-              {USER_OPTIONS.map(user => (
+              {profiles.map((user, idx) => (
                 <linearGradient key={user} id={`color${user.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS[user as keyof typeof COLORS]} stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor={COLORS[user as keyof typeof COLORS]} stopOpacity={0}/>
+                  <stop offset="5%" stopColor={COLORS[idx % COLORS.length]} stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor={COLORS[idx % COLORS.length]} stopOpacity={0}/>
                 </linearGradient>
               ))}
             </defs>
@@ -91,12 +92,12 @@ export function ProductivityInsights({ tasks }: ProductivityInsightsProps) {
                 return null;
               }}
             />
-            {USER_OPTIONS.map(user => (
+            {profiles.map((user, idx) => (
               <Area
                 key={user}
                 type="monotone"
                 dataKey={user}
-                stroke={COLORS[user as keyof typeof COLORS]}
+                stroke={COLORS[idx % COLORS.length]}
                 strokeWidth={3}
                 fillOpacity={1}
                 fill={`url(#color${user.replace(/\s+/g, '')})`}

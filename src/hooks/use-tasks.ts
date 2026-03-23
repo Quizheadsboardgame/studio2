@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Task, TaskStatus, TaskTab, TaskUser, PRIORITY_ORDER, USER_OPTIONS } from '@/types/task';
+import { Task, TaskStatus, TaskTab, TaskUser, PRIORITY_ORDER } from '@/types/task';
 import { 
   useUser, 
   useFirestore, 
   useAuth,
   useCollection, 
+  useDoc,
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
   deleteDocumentNonBlocking,
+  setDocumentNonBlocking,
   initiateAnonymousSignIn
 } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -56,6 +58,26 @@ export function useTasks() {
     }
   }, [user, isUserLoading, auth]);
 
+  // Profiles management
+  const profilesDocRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData, isLoading: isUserDocLoading } = useDoc(profilesDocRef);
+  const profiles = useMemo(() => {
+    if (userData?.profiles && Array.isArray(userData.profiles)) {
+      return userData.profiles as string[];
+    }
+    return ['Daily chart'];
+  }, [userData]);
+
+  useEffect(() => {
+    if (!profiles.includes(activeUser) && profiles.length > 0) {
+      setActiveUser(profiles[0]);
+    }
+  }, [profiles, activeUser]);
+
   const tasksQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return collection(db, 'users', user.uid, 'tasks');
@@ -84,7 +106,7 @@ export function useTasks() {
   }, [tasks, todayStr, tomorrowStr, user, db, isTasksLoading]);
 
   const stats = useMemo(() => {
-    if (!todayStr) return { tabCounts: {}, userCounts: {}, userProgress: {} };
+    if (!todayStr || profiles.length === 0) return { tabCounts: {}, userCounts: {}, userProgress: {} };
 
     const tabCounts: Record<string, number> = {};
     const userCounts: Record<string, number> = {};
@@ -96,7 +118,7 @@ export function useTasks() {
       return acc;
     }, {} as Record<string, Task[]>);
 
-    USER_OPTIONS.forEach(userName => {
+    profiles.forEach(userName => {
       const userTasks = tasksByUser[userName] || [];
       
       if (userName === activeUser) {
@@ -123,7 +145,7 @@ export function useTasks() {
     });
 
     return { tabCounts, userCounts, userProgress };
-  }, [tasks, activeUser, todayStr]);
+  }, [tasks, activeUser, todayStr, profiles]);
 
   const filteredTasks = useMemo(() => {
     return tasks
@@ -155,8 +177,6 @@ export function useTasks() {
     if (updatedTask.id === 'new') {
       const { id: _, ...data } = { 
         ...updatedTask, 
-        owner: 'Daily chart', // Force the owner to 'Daily chart'
-        createdBy: 'Daily chart',
         updatedAt: now 
       };
       addDocumentNonBlocking(tasksQuery, data);
@@ -190,10 +210,6 @@ export function useTasks() {
       }
     }
     updateDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', id), { status: newStatus, updatedAt: new Date().toISOString() });
-    
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
   };
 
   const moveTaskDate = (id: string) => {
@@ -215,12 +231,45 @@ export function useTasks() {
     deleteDocumentNonBlocking(doc(db, 'users', user.uid, 'tasks', id));
   };
 
+  const saveProfiles = (newProfiles: string[]) => {
+    if (!profilesDocRef) return;
+    setDocumentNonBlocking(profilesDocRef, { profiles: newProfiles, id: user?.uid }, { merge: true });
+  };
+
+  const addProfile = (name: string) => {
+    if (profiles.includes(name)) return;
+    saveProfiles([...profiles, name]);
+  };
+
+  const renameProfile = (oldName: string, newName: string) => {
+    if (profiles.includes(newName)) return;
+    const newProfiles = profiles.map(p => p === oldName ? newName : p);
+    saveProfiles(newProfiles);
+    
+    // Update all tasks associated with this profile
+    tasks.forEach(task => {
+      if (task.owner === oldName) {
+        updateDocumentNonBlocking(doc(db!, 'users', user!.uid, 'tasks', task.id), { owner: newName });
+      }
+    });
+
+    if (activeUser === oldName) setActiveUser(newName);
+  };
+
+  const removeProfile = (name: string) => {
+    if (profiles.length <= 1) return;
+    const newProfiles = profiles.filter(p => p !== name);
+    saveProfiles(newProfiles);
+    if (activeUser === name) setActiveUser(newProfiles[0]);
+  };
+
   return {
     tasks, filteredTasks,
+    profiles, addProfile, renameProfile, removeProfile,
     tabCounts: stats.tabCounts,
     userCounts: stats.userCounts,
     userProgress: stats.userProgress,
-    isLoaded: !isUserLoading && !isTasksLoading && todayStr !== '',
+    isLoaded: !isUserLoading && !isTasksLoading && !isUserDocLoading && todayStr !== '',
     searchQuery, setSearchQuery,
     statusFilter, setStatusFilter,
     activeTab, setActiveTab,

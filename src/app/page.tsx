@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -10,7 +9,7 @@ import { TaskListView } from "@/components/task-list-view";
 import { TaskBoardView } from "@/components/task-board-view";
 import { TaskDiaryView } from "@/components/task-diary-view";
 import { UserStats } from "@/components/user-stats";
-import { Task, TAB_OPTIONS, STATUS_OPTIONS, USER_OPTIONS, TaskTab } from "@/types/task";
+import { Task, TAB_OPTIONS, STATUS_OPTIONS } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,19 +25,35 @@ import {
   Loader2,
   RefreshCw,
   LogOut,
-  History
+  History,
+  Settings2,
+  Trash2,
+  Check,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signOut } from "firebase/auth";
 import { addDays, format } from "date-fns";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 export default function Home() {
   const { user } = useUser();
   const auth = useAuth();
   const {
     filteredTasks,
+    profiles,
+    addProfile,
+    renameProfile,
+    removeProfile,
     tabCounts,
     userCounts,
     userProgress,
@@ -66,6 +81,10 @@ export default function Home() {
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
+  const [isManageProfilesOpen, setIsManageProfilesOpen] = React.useState(false);
+  
+  const [newProfileName, setNewProfileName] = React.useState("");
+  const [editingProfileName, setEditingProfileName] = React.useState<{old: string, new: string} | null>(null);
 
   React.useEffect(() => {
     if (isDarkMode) {
@@ -100,6 +119,20 @@ export default function Home() {
       endTime: ''
     };
     setEditingTask(template);
+  };
+
+  const handleAddProfile = () => {
+    if (newProfileName.trim()) {
+      addProfile(newProfileName.trim());
+      setNewProfileName("");
+    }
+  };
+
+  const handleRenameProfile = () => {
+    if (editingProfileName && editingProfileName.new.trim()) {
+      renameProfile(editingProfileName.old, editingProfileName.new.trim());
+      setEditingProfileName(null);
+    }
   };
 
   if (!isLoaded) {
@@ -187,36 +220,101 @@ export default function Home() {
         />
 
         <div className="flex flex-col items-center mb-12">
-          <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="w-full max-w-sm">
-            <TabsList className="grid w-full grid-cols-1 h-14 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl">
-              {USER_OPTIONS.map((userName) => {
-                const count = userCounts[userName] || 0;
-                const isActive = activeUser === userName;
-                
-                return (
-                  <TabsTrigger 
-                    key={userName} 
-                    value={userName}
-                    className={cn(
-                      "relative rounded-xl font-black uppercase tracking-[0.2em] transition-all h-12 text-[10px] data-[state=active]:bg-blue-900 data-[state=active]:text-white shadow-blue-900/20"
-                    )}
-                  >
-                    <div className="flex flex-col items-center justify-center">
-                      <span>{userName}</span>
-                    </div>
-                    {count > 0 && (
-                      <span className={cn(
-                        "absolute -top-1 -right-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-lg text-[9px] font-black border bg-slate-900 text-white border-slate-700",
-                        isActive && "bg-white text-blue-950 border-white"
-                      )}>
-                        {count}
-                      </span>
-                    )}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center gap-4 w-full max-w-lg">
+            <Tabs value={activeUser} onValueChange={(val) => setActiveUser(val as any)} className="flex-1">
+              <TabsList className="grid w-full grid-cols-1 h-14 p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-x-auto no-scrollbar">
+                <div className="flex items-center w-full gap-1">
+                  {profiles.map((userName) => {
+                    const count = userCounts[userName] || 0;
+                    const isActive = activeUser === userName;
+                    
+                    return (
+                      <TabsTrigger 
+                        key={userName} 
+                        value={userName}
+                        className={cn(
+                          "relative rounded-xl font-black uppercase tracking-[0.2em] transition-all h-12 text-[10px] data-[state=active]:bg-blue-900 data-[state=active]:text-white shadow-blue-900/20 px-6 min-w-[140px]"
+                        )}
+                      >
+                        <div className="flex flex-col items-center justify-center">
+                          <span>{userName}</span>
+                        </div>
+                        {count > 0 && (
+                          <span className={cn(
+                            "absolute -top-1 -right-1 h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-lg text-[9px] font-black border bg-slate-900 text-white border-slate-700",
+                            isActive && "bg-white text-blue-950 border-white"
+                          )}>
+                            {count}
+                          </span>
+                        )}
+                      </TabsTrigger>
+                    );
+                  })}
+                </div>
+              </TabsList>
+            </Tabs>
+            
+            <Dialog open={isManageProfilesOpen} onOpenChange={setIsManageProfilesOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl">
+                  <Settings2 className="h-5 w-5 text-blue-500" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Manage Profiles</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="New profile name..." 
+                      value={newProfileName}
+                      onChange={(e) => setNewProfileName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddProfile()}
+                    />
+                    <Button onClick={handleAddProfile} disabled={!newProfileName.trim()}>Add</Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {profiles.map(p => (
+                      <div key={p} className="flex items-center justify-between p-3 rounded-xl border bg-slate-50 dark:bg-slate-900/50">
+                        {editingProfileName?.old === p ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input 
+                              value={editingProfileName.new}
+                              onChange={(e) => setEditingProfileName({...editingProfileName, new: e.target.value})}
+                              className="h-8"
+                              autoFocus
+                            />
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-500" onClick={handleRenameProfile}>
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => setEditingProfileName(null)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="font-bold text-sm uppercase tracking-wider">{p}</span>
+                            <div className="flex items-center gap-1">
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-500" onClick={() => setEditingProfileName({old: p, new: p})}>
+                                <Settings2 className="h-4 w-4" />
+                              </Button>
+                              {profiles.length > 1 && (
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => removeProfile(p)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="space-y-8">

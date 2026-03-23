@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Play, Pause, RotateCcw, Timer, Quote, ShieldCheck } from "lucide-react";
+import { Play, Pause, RotateCcw, Timer, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,39 +16,22 @@ interface UserStatsProps {
 }
 
 const USER_COLORS = {
-  'Daily chart': {
-    bg: 'bg-blue-900',
-    text: 'text-blue-900',
-    border: 'border-blue-200/50',
-    shadow: 'shadow-blue-900/10',
-    ring: 'ring-blue-300',
-    soft: 'bg-blue-50/50 dark:bg-blue-950/20',
-    button: 'bg-slate-900 dark:bg-blue-800 hover:bg-slate-800 dark:hover:bg-blue-700 text-white'
-  }
+  bg: 'bg-blue-900',
+  text: 'text-blue-900',
+  border: 'border-blue-200/50',
+  shadow: 'shadow-blue-900/10',
+  ring: 'ring-blue-300',
+  soft: 'bg-blue-50/50 dark:bg-blue-950/20',
+  button: 'bg-slate-900 dark:bg-blue-800 hover:bg-slate-800 dark:hover:bg-blue-700 text-white'
 };
-
-const MOTIVATIONAL_QUOTES = [
-  "The only way to do great work is to love what you do.",
-  "Don't count the days, make the days count.",
-  "The secret of getting ahead is getting started.",
-  "Your time is limited, don't waste it living someone else's life.",
-  "Focus on being productive instead of busy.",
-  "Action is the foundational key to all success.",
-  "The future depends on what you do today.",
-  "Dream big. Start small. But most of all, start.",
-  "Efficiency is doing things right; effectiveness is doing the right things.",
-  "Success is the sum of small efforts, repeated day in and day out."
-];
 
 export function UserStats({ activeUser, progress }: UserStatsProps) {
   const activeStats = progress[activeUser] || { completed: 0, total: 0, percentage: 100, remaining: 0 };
-  const activeUserTheme = USER_COLORS[activeUser];
   const { toast } = useToast();
 
   const [timerMinutes, setTimerMinutes] = React.useState("25");
   const [timeLeft, setTimeLeft] = React.useState(25 * 60);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
-  const [quoteIndex, setQuoteIndex] = React.useState(0);
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -67,13 +50,6 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
       if (interval) clearInterval(interval);
     };
   }, [isTimerActive, timeLeft, toast]);
-
-  React.useEffect(() => {
-    const quoteInterval = setInterval(() => {
-      setQuoteIndex((prev) => (prev + 1) % MOTIVATIONAL_QUOTES.length);
-    }, 120000);
-    return () => clearInterval(quoteInterval);
-  }, []);
 
   const toggleTimer = () => {
     if (!isTimerActive && timeLeft === 0) {
@@ -108,7 +84,7 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
     <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-1000">
       <Card className={cn(
         "overflow-hidden border border-slate-200/50 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-2xl transition-all duration-700 rounded-[2rem]",
-        activeUserTheme.shadow
+        USER_COLORS.shadow
       )}>
         <CardContent className="p-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
@@ -118,10 +94,10 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
                 <div className="flex items-center gap-6">
                   <div className={cn(
                     "h-20 w-20 rounded-3xl flex items-center justify-center shadow-inner relative overflow-hidden group",
-                    activeUserTheme.soft
+                    USER_COLORS.soft
                   )}>
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
-                    <ShieldCheck className={cn("h-10 w-10 relative z-10", activeUserTheme.text)} />
+                    <ShieldCheck className={cn("h-10 w-10 relative z-10", USER_COLORS.text)} />
                   </div>
                   <div>
                     <h2 className="text-3xl font-black font-headline tracking-tighter uppercase">
@@ -133,7 +109,7 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={cn("text-7xl font-black tracking-tighter font-headline", activeUserTheme.text)}>
+                  <span className={cn("text-7xl font-black tracking-tighter font-headline", USER_COLORS.text)}>
                     {activeStats.percentage}%
                   </span>
                 </div>
@@ -142,7 +118,7 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
                 <Progress 
                   value={activeStats.percentage} 
                   className="h-4 rounded-full bg-slate-200 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50"
-                  indicatorClassName={cn(activeUserTheme.bg, "transition-all duration-1000 ease-out")}
+                  indicatorClassName={cn(USER_COLORS.bg, "transition-all duration-1000 ease-out")}
                 />
                 <div className="flex justify-between items-center px-1">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -159,7 +135,7 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
               "p-8 rounded-[1.5rem] border border-slate-200/50 dark:border-slate-800/50 flex flex-col items-center justify-center space-y-5 bg-white/50 dark:bg-black/40 backdrop-blur-xl shadow-inner",
             )}>
               <div className="flex items-center gap-2 mb-1">
-                <Timer className={cn("h-5 w-5", activeUserTheme.text)} />
+                <Timer className={cn("h-5 w-5", USER_COLORS.text)} />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Focus Timer</h3>
               </div>
               
@@ -177,7 +153,7 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
                 />
                 <Button 
                   onClick={toggleTimer}
-                  className={cn("flex-1 h-12 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg", activeUserTheme.button)}
+                  className={cn("flex-1 h-12 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg", USER_COLORS.button)}
                 >
                   {isTimerActive ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
                   {isTimerActive ? "Pause" : "Start"}
@@ -190,14 +166,6 @@ export function UserStats({ activeUser, progress }: UserStatsProps) {
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
-              </div>
-
-              <div className="mt-4 px-6 py-4 bg-slate-900/5 dark:bg-white/5 rounded-2xl w-full text-center flex flex-col items-center gap-3 border border-slate-100 dark:border-white/5 transition-all duration-1000" key={quoteIndex}>
-                <Quote className={cn("h-4 w-4 opacity-20", activeUserTheme.text)} />
-                <p className="text-[11px] font-bold italic leading-relaxed text-slate-700 dark:text-slate-300 max-w-[240px]">
-                  "{MOTIVATIONAL_QUOTES[quoteIndex]}"
-                </p>
-                <div className="h-0.5 w-8 bg-blue-500/20 rounded-full"></div>
               </div>
             </div>
 
